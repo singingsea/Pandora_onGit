@@ -238,6 +238,8 @@ def main():
     
 #%%
 if __name__ == '__main__':
+    import sys
+    sys.path.insert(0, 'C://Users//ZhaoX//Pandora_onGit//local_inputs')
     from BlickP_daily_VCD_plot_inputs import *
     main()
 
