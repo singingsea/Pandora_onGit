@@ -148,8 +148,17 @@ def L2_data_column_nm_search(useful_column_strs,df_Blick):
    
     return AMF_column_nm, VCD_column_nm, VCD_err_column_nm, L2_fit_quality_column_nm, integration_time_column_nm
 #%%    
-def main():
+def main(input_df):
     global gas_type, instrument_name, new_df, calibration_factors, plot_path, df_Blick, useful_column_strs
+    
+    instrument_name = input_df.instrument_name    
+    Short_location_name = input_df.Short_location_name
+    gas_type = input_df.gas_type
+    Blick_shelve_filename = input_df.Blick_shelve_filename
+    plot_path = input_df.plot_path
+    useful_column_strs = input_df.useful_column_strs
+    sites_list = input_df.sites_list
+    trace_gases = input_df.trace_gases
     #%% ************* 1. import BlickP L2 data *********************
     import shelve
     my_shelf = shelve.open(Blick_shelve_filename)
@@ -241,8 +250,7 @@ if __name__ == '__main__':
     import sys
     sys.path.insert(0, 'C://Users//ZhaoX//Pandora_onGit//local_inputs')
     from BlickP_daily_VCD_plot_inputs import *
-    main()
-
+    main(input_df)
 
 
 
