@@ -148,7 +148,7 @@ from rcodes_list import retrieval_rcodes
 from instruments_list import instruments_list
 
 for instrument_no in instruments_list.values():
-    filepath =  ['\\\\wdow05dtmibroh\\GDrive\\Pandora\\' + instrument_no + '\\Blick\\L2\\'] # Pandora108 Ozone, NO2 data on Brewer server
+    filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\' + instrument_no + '\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
         
     plotpath = filepath
     shelve_filename = filepath + 'Blick_L2' + '.out' 
