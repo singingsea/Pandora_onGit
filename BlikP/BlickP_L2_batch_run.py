@@ -11,8 +11,8 @@ Created on Thu Sep 28 09:33:10 2017
 
 @author: ZhaoX
 """
-from IPython import get_ipython ## house keeping, first two lines to clear workspace
-get_ipython().magic('reset -sf') 
+f#rom IPython import get_ipython ## house keeping, first two lines to clear workspace
+#get_ipython().magic('reset -sf') 
 
 import pandas as pd
 import matplotlib.pyplot as plt
