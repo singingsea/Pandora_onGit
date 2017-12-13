@@ -8,7 +8,9 @@ Created on Wed Oct 25 14:02:25 2017
 # rcode in this list can be ploted by "plot_BlickP_L2", if a new rcode is used in retrieval, please add its name here and also relative information (eg. target trace gas column number) to "plot_BlickP_L2"
 retrieval_rcodes = ['rout0' , 'rnvs0', 'rfus0', 'rsut2']
 
-retrieval_trace_gas = {'rout0':'O3' , 
-                       'rnvs0':'NO2', 
-                       'rfus0':'HCHO',
-                       'rsut2':'SO2'}
+retrieval_trace_gas = {
+                    'O3' : 'rout0',
+                    'NO2' : 'rnvs0',
+                    'HCHO' : 'rfus0',
+                    'SO2' : 'rsut2'
+                       }
