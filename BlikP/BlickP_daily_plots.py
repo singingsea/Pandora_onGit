@@ -7,7 +7,7 @@ Created on Tue Oct 31 16:06:26 2017
 
 from IPython import get_ipython ## house keeping, first two lines to clear workspace
 get_ipython().magic('reset -sf') 
-
+import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.dates as dates
 import numpy, pdb
@@ -19,6 +19,7 @@ import pandas as pd
 
 #%%
 def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
+    
     print('\n \n>>>Plotting daily time serise: ')
     new_df.index = new_df['LTC'] # use LTC as time index
     
@@ -33,9 +34,10 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
         delta_time = pd.Timedelta(hours = 24)
         delta_time_xlim1 = pd.Timedelta(hours = 3) # only plot sunlight period, from 6 a.m. to 18 a.m. (local time)
         delta_time_xlim2 = pd.Timedelta(hours = 21)
-
-        fig = plt.figure(num=None, figsize=(10, 10), dpi=200, facecolor='w', edgecolor='k')
+        
+        
         for day in days:
+            fig = plt.figure(num=None, figsize=(10, 10), dpi=200, facecolor='w', edgecolor='k')
             ind_start = day
             ind_end = day + delta_time
     
@@ -48,52 +50,61 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
 
                 #plt.plot(x_time, y2 ,'rx', label = 'BlickP original VCD')
                 
-                groups = new_df.groupby('VCD_err_rounded')
+                groups = new_df[ind_start:ind_end].groupby('VCD_err_rounded')
+                ax = fig.add_subplot(1,1,1) 
+                #ax.plot(x_time, y2 ,'.')
+ 
                 for key, group in groups:
 
+                    #x_group = group.timestamp[ind_start:ind_end]
                     x_group = group.timestamp[ind_start:ind_end]
                     y_group = group[VCD_column_nm][ind_start:ind_end]
                 
-                    plt.plot(x_group, y_group ,'s', label = str(group.VCD_err_rounded[0]))
-
+                    #plt.plot(x_group, y_group ,'s', label = str(group.VCD_err_rounded[0]))
+                    ax.plot(x_group, y_group ,'.', markersize=12,  label = str(group.VCD_err_rounded[0]))
+                    
             
-        
-                plt.xlim(day + delta_time_xlim1, day + delta_time_xlim2)
-                plt.legend()
-                ax = fig.add_subplot(1,1,1)        
+                xlim_left = pd.Timestamp.to_pydatetime(day + delta_time_xlim1)
+                xlim_right = pd.Timestamp.to_pydatetime(day + delta_time_xlim2)
+                #fig.xlim(xlim_left, xlim_right)
+                ax.set_xlim(xlim_left, xlim_right)
+
+                ax.legend()
+                #ax = fig.add_subplot(1,1,1)     
+                
                 ax.xaxis.set_major_locator(dates.HourLocator(interval=2))
                 ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))
                 
                 if gas_type == 'O3':
-                    plt.ylim(200,500)
-                    plt.text(day + pd.Timedelta(hours = 7),490, 'Srart time: ' + str(x_time[0]))
-                    plt.text(day + pd.Timedelta(hours = 7),480, 'End time: ' + str(x_time[-1]))
-                    #plt.text(day + pd.Timedelta(hours = 7),470, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
-                    plt.text(day + pd.Timedelta(hours = 7),460, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
+                    ax.set_ylim(200,500)
+                    ax.text(day + pd.Timedelta(hours = 7),490, 'Srart time: ' + str(x_time[0]))
+                    ax.text(day + pd.Timedelta(hours = 7),480, 'End time: ' + str(x_time[-1]))
+                    #ax.text(day + pd.Timedelta(hours = 7),470, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
+                    ax.text(day + pd.Timedelta(hours = 7),460, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
                 elif gas_type == 'NO2':
-                    plt.ylim(-1,3)
-                    plt.text(day + pd.Timedelta(hours = 7),2.7, 'Srart time: ' + str(x_time[0]))
-                    plt.text(day + pd.Timedelta(hours = 7),2.5, 'End time: ' + str(x_time[-1]))
-                    #plt.text(day + pd.Timedelta(hours = 7),2.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
-                    plt.text(day + pd.Timedelta(hours = 7),2.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
+                    ax.set_ylim(-1,3)
+                    ax.text(day + pd.Timedelta(hours = 7),2.7, 'Srart time: ' + str(x_time[0]))
+                    ax.text(day + pd.Timedelta(hours = 7),2.5, 'End time: ' + str(x_time[-1]))
+                    #ax.text(day + pd.Timedelta(hours = 7),2.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
+                    ax.text(day + pd.Timedelta(hours = 7),2.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
                 elif gas_type == 'SO2':
-                    plt.ylim(-3,4)
-                    plt.text(day + pd.Timedelta(hours = 7),3.7, 'Srart time: ' + str(x_time[0]))
-                    plt.text(day + pd.Timedelta(hours = 7),3.5, 'End time: ' + str(x_time[-1]))
-                    #plt.text(day + pd.Timedelta(hours = 7),3.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
+                    ax.set_ylim(-3,4)
+                    ax.text(day + pd.Timedelta(hours = 7),3.7, 'Srart time: ' + str(x_time[0]))
+                    ax.text(day + pd.Timedelta(hours = 7),3.5, 'End time: ' + str(x_time[-1]))
+                    #ax.text(day + pd.Timedelta(hours = 7),3.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
                     plt.text(day + pd.Timedelta(hours = 7),3.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
                 elif gas_type == 'HCHO':
-                    plt.ylim(-3,4)
-                    plt.text(day + pd.Timedelta(hours = 7),3.7, 'Srart time: ' + str(x_time[0]))
-                    plt.text(day + pd.Timedelta(hours = 7),3.5, 'End time: ' + str(x_time[-1]))
-                    #plt.text(day + pd.Timedelta(hours = 7),3.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
-                    plt.text(day + pd.Timedelta(hours = 7),3.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
-                plt.xlabel('LTC')
-                plt.ylabel(gas_type + ' VCD [DU]')
+                    ax.set_ylim(-3,4)
+                    ax.text(day + pd.Timedelta(hours = 7),3.7, 'Srart time: ' + str(x_time[0]))
+                    ax.text(day + pd.Timedelta(hours = 7),3.5, 'End time: ' + str(x_time[-1]))
+                    #ax.text(day + pd.Timedelta(hours = 7),3.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
+                    ax.text(day + pd.Timedelta(hours = 7),3.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
+                ax.set_xlabel('LTC')
+                ax.set_ylabel(gas_type + ' VCD [DU]')
                 measurement_location = new_df.location[ind_start:ind_end]
-                plt.title(instrument_name + '@' + measurement_location[0] + '\nColour coded by rounded uncertainty of VCD in [DU]')
-                plt.grid()
-                plt.tight_layout()
+                ax.set_title(instrument_name + '@' + measurement_location[0] + '\nColour coded by rounded uncertainty of VCD in [DU]')
+                ax.grid()
+                fig.tight_layout()
                 if len(str(day.month)) == 1:
                     monthlabel = '0' + str(day.month)
                 else:
@@ -103,12 +114,14 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
                 else:
                     daylabel = str(day.day)
                 timelabel = str(day.year) + monthlabel + daylabel
-                plt.savefig(plot_path + instrument[0] + '_' + str(location) + '_BlickP_' + gas_type + '_VCD_'+ timelabel +'.png')
-                #plt.show()
-                #plt.close(fig)
-                plt.clf()
                 
-        plt.close()
+                fig.savefig(plot_path + instrument[0] + '_' + str(location) + '_BlickP_' + gas_type + '_VCD_'+ timelabel +'.png',dpi=600, facecolor='w' )
+                #plt.show()
+
+                #plt.clf()
+                
+                plt.close(fig)
+        
 
 
 #%%
@@ -191,6 +204,10 @@ def main(input_df):
     df_Blick = df_Blick.sort_values('LTC')
     df_Blick.index = df_Blick.LTC
     
+    # filter data by start processing date, this only used for auto-weekly processing
+    if input_df.weekly_processing == True:
+        df_Blick = df_Blick[input_df.start_date:]
+    
     #df_Blick = df_Blick['2016-04-04':'2016-04-20'] # dummy filter, only for testing
     #df_Blick = df_Blick['2017-02-02':'2017-02-4'] # dummy filter, only for testing
     
@@ -220,35 +237,37 @@ def main(input_df):
         print('\n \n>>>Warning : no measurements left after apply filters, no daily plots will be made.\n' )
         
     #%% ************* 6. save new dataframe, include calibrated SO2 VCDs*********************
-    shelve_filename = plot_path + 'BlickP_filtered_VCD_' + gas_type + '_' + instrument_name +'.out'   
+    if input_df.weekly_processing == False:# we will save filtered VCDs, only if this is not auto-weekly processing
+        shelve_filename = plot_path + 'BlickP_filtered_VCD_' + gas_type + '_' + instrument_name +'.out'   
+        
+        # save data to shelve
+        my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
     
-    # save data to shelve
-    my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
-
-    #for key in dir():
-    for key in globals():
-        #print(key)
-        if key.find('df_Blick') != -1:
-            try:
-                my_shelf[key] = globals()[key]
-                print('\n \n>>>"' + key + '" : data successfully saved! ')
-            except TypeError:
-                print('ERROR shelving: {0}'.format(key))
-        else:
-            #print('key not matched')
-            pass
-    my_shelf.close()
-    
-    # load data to shelve
-    my_shelf = shelve.open(shelve_filename)
-    for key in my_shelf:
-        globals()[key]=my_shelf[key]
-    my_shelf.close()
+        #for key in dir():
+        for key in globals():
+            #print(key)
+            if key.find('df_Blick') != -1:
+                try:
+                    my_shelf[key] = globals()[key]
+                    print('\n \n>>>"' + key + '" : data successfully saved! ')
+                except TypeError:
+                    print('ERROR shelving: {0}'.format(key))
+            else:
+                #print('key not matched')
+                pass
+        my_shelf.close()
+        
+        # load data to shelve
+        my_shelf = shelve.open(shelve_filename)
+        for key in my_shelf:
+            globals()[key]=my_shelf[key]
+        my_shelf.close()
     
 #%%
 if __name__ == '__main__':
     import sys
     sys.path.insert(0, 'C://Users//ZhaoX//Pandora_onGit//local_inputs')
+    sys.path.insert(0, '\\\\wdow05dtmibroh\\CDrive\\UTILS\\Blick\\Pandora_onGit\\local_inputs')
     from BlickP_daily_VCD_plot_inputs import *
     main(input_df)
 
