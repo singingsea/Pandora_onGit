@@ -229,7 +229,7 @@ for instrument_no in instruments_list.values():
     import shelve    
     my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
     for key in dir():     
-        if key.find('Pandora') != -1:
+        if key.find('Pandora' + instrument_no) != -1:
             try:
                 my_shelf[key] = globals()[key]
                 print(key + ' saved as dataframe! ')
