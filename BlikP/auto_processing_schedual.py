@@ -5,7 +5,7 @@ Created on Wed Dec 13 15:20:02 2017
 @author: ZhaoX
 """
 
-# 
+# this is for setting schedual for run BlickP.exe, more details can be found in auto_BlickP_precess.py, 
 auto_processing_schedual_step1 = {
         'Monday': 'Pandora103', 
         'Tuesday': 'Pandora104', 
@@ -15,7 +15,8 @@ auto_processing_schedual_step1 = {
         'Saturday':'Pandora123' 
         }
 
-# 
+# this is for setting schedual for reformat BlickP L2 data and making daily plots
+# more details can be found in BlickP_L2_batch_run.py and BlickP_daily_VCD_plot_batch_run.py
 auto_processing_schedual_step2 = {
         'Tuesday': 'Pandora103', 
         'Wednesday':'Pandora104' ,
@@ -26,7 +27,8 @@ auto_processing_schedual_step2 = {
         }
 
 # python datetime weekday --> Monday is 0, Tuesday is 1
-
+# Do NOT change this "datetime_weekday" dict! Unless you know what you want to do for sure!
+# for changing scheduals, you only need modify "auto_processing_schedual_step1" and "auto_processing_schedual_step2"
 datetime_weekday = {
         '0' : 'Monday', 
         '1' : 'Tuesday', 
