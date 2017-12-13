@@ -147,98 +147,102 @@ from sites_list import sites_list
 from rcodes_list import retrieval_rcodes
 from instruments_list import instruments_list
 
-for instrument_no in instruments_list.values():
-    filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\' + instrument_no + '\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
-        
-    plotpath = filepath
-    shelve_filename = filepath + 'Blick_L2' + '.out' 
+# now lets' find the weekday of today, and perform sechdualed step 2
+from datetime import datetime, timedelta
+from  auto_processing_schedual import auto_processing_schedual_step2, datetime_weekday
+weekday_of_today = datetime_weekday[str(datetime.today().weekday())]
+instrument_no = auto_processing_schedual_step2[weekday_of_today][-3:] # find which instrument will be processed for this day
+
+filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\' + instrument_no + '\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
     
+plotpath = filepath
+shelve_filename = filepath + 'Blick_L2' + '.out' 
+
+
+onlytxtfiles = load_files(filepath)
+for file_nm in onlytxtfiles:
+    # read in data as dataframe
+    print('\n \n ')
+    print('Read in data from file : \n' + filepath + file_nm)
+    df = read_BlickP_L2(filepath + file_nm)       
     
+    # add instrument name
+    print('Add instrument name to dataframe')
+    df['instrument'] = file_nm[file_nm.rfind('Pandora'):file_nm.find('Pandora') + len('Pandora')+3]
     
-    onlytxtfiles = load_files(filepath)
-    for file_nm in onlytxtfiles:
-        # read in data as dataframe
-        print('\n \n ')
-        print('Read in data from file : \n' + filepath + file_nm)
-        df = read_BlickP_L2(filepath + file_nm)       
-        
-        # add instrument name
-        print('Add instrument name to dataframe')
-        df['instrument'] = file_nm[file_nm.rfind('Pandora'):file_nm.find('Pandora') + len('Pandora')+3]
-        
-        # add location
-        print('Add location info. to dataframe')
-        site_found = False
-        for site in sites_list.keys():
-            if file_nm.find(site) != -1:
-                df['location'] = site
-                site_found = True
-                location = site
-        if site_found == False:
-            try:
-                new_location = file_nm[file_nm.find('_')+1:file_nm.find('_L2')]
-                df['location'] = new_location
-                print('\n')
-                print('-------- Warnning: -----------')
-                print('A new measurement location (not in measurement location lists) is found: "' + new_location + '"')
-                print('IF this is a new site, please add this location to site list in future.')
-                print('------------------- \n')
-            except:
-                df['location'] = 'UnKnown'
-                print('\n')
-                print('-------- Warnning: -----------')
-                print('The measurement location is not recognized, please check and add new location info.')
-                print('------------------- \n')
-     
-        # add timestamp
-        print('Convert ISO 8601 time to Python-dateutil datetime')
-        df['time'] = list(map(dateutil.parser.parse, df['Column 1: UT date and time for center of measurement, yyyymmddThhmmssZ (ISO 8601)']))
-        # add UTC and LTC
-        print('Add UTC column to dataframe')              
-        df['UTC'] = df.time.dt.tz_convert('UTC')
-        if location in sites_list.keys():
-            print('Add LTC column to dataframe')              
-            df['LTC'] = df.time.dt.tz_convert(sites_list[location])
-        else:
-           print('\n')
-           print('-------- Warnning: -----------')
-           print('Do not know timezone for the new measurement location (not in measurement location lists) : "' + new_location + '"')
-           print('No local time (LTC) column created for this site.')
-           print('------------------- \n')
-            
-     
-        rcode_found = False      
-        for retrieval_rcode in  retrieval_rcodes:
-            if file_nm.find(retrieval_rcode) != -1:
-                #exec(file_nm[0:-6] + '= df')
-                print('Plotting data (retrieved by rcode: ' + retrieval_rcode +') ... ')
-                plot_BlickP_L2(df,filepath + file_nm)
-                rcode_found = True
-        if rcode_found == False:
+    # add location
+    print('Add location info. to dataframe')
+    site_found = False
+    for site in sites_list.keys():
+        if file_nm.find(site) != -1:
+            df['location'] = site
+            site_found = True
+            location = site
+    if site_found == False:
+        try:
+            new_location = file_nm[file_nm.find('_')+1:file_nm.find('_L2')]
+            df['location'] = new_location
             print('\n')
             print('-------- Warnning: -----------')
-            print('An L2 file was not identified: "' + file_nm + '"')
-            print('This file is not ploted (but dataframe will be saved).Please check output format and add information about this file (eg. target trace gas column number) to  function "plot_BlickP_L2". ')
+            print('A new measurement location (not in measurement location lists) is found: "' + new_location + '"')
+            print('IF this is a new site, please add this location to site list in future.')
             print('------------------- \n')
-            
+        except:
+            df['location'] = 'UnKnown'
+            print('\n')
+            print('-------- Warnning: -----------')
+            print('The measurement location is not recognized, please check and add new location info.')
+            print('------------------- \n')
+ 
+    # add timestamp
+    print('Convert ISO 8601 time to Python-dateutil datetime')
+    df['time'] = list(map(dateutil.parser.parse, df['Column 1: UT date and time for center of measurement, yyyymmddThhmmssZ (ISO 8601)']))
+    # add UTC and LTC
+    print('Add UTC column to dataframe')              
+    df['UTC'] = df.time.dt.tz_convert('UTC')
+    if location in sites_list.keys():
+        print('Add LTC column to dataframe')              
+        df['LTC'] = df.time.dt.tz_convert(sites_list[location])
+    else:
+       print('\n')
+       print('-------- Warnning: -----------')
+       print('Do not know timezone for the new measurement location (not in measurement location lists) : "' + new_location + '"')
+       print('No local time (LTC) column created for this site.')
+       print('------------------- \n')
         
-        exec(file_nm[0:-6] + '= df')# rename dataframe
+ 
+    rcode_found = False      
+    for retrieval_rcode in  retrieval_rcodes:
+        if file_nm.find(retrieval_rcode) != -1:
+            #exec(file_nm[0:-6] + '= df')
+            print('Plotting data (retrieved by rcode: ' + retrieval_rcode +') ... ')
+            plot_BlickP_L2(df,filepath + file_nm)
+            rcode_found = True
+    if rcode_found == False:
+        print('\n')
+        print('-------- Warnning: -----------')
+        print('An L2 file was not identified: "' + file_nm + '"')
+        print('This file is not ploted (but dataframe will be saved).Please check output format and add information about this file (eg. target trace gas column number) to  function "plot_BlickP_L2". ')
+        print('------------------- \n')
+        
     
-    # save data
-    print('\nSave dataframes:')
-    import shelve    
-    my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
-    for key in dir():     
-        if key.find('Pandora' + instrument_no) != -1:
-            try:
-                my_shelf[key] = globals()[key]
-                print(key + ' saved as dataframe! ')
-            except TypeError:
-                print('ERROR shelving: {0}'.format(key))
-    my_shelf.close()
-    
-    # reload data
-    my_shelf = shelve.open(shelve_filename)
-    for key in my_shelf:
-        globals()[key]=my_shelf[key]
-    my_shelf.close()
+    exec(file_nm[0:-6] + '= df')# rename dataframe
+
+# save data
+print('\nSave dataframes:')
+import shelve    
+my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
+for key in dir():     
+    if key.find('Pandora' + instrument_no) != -1:
+        try:
+            my_shelf[key] = globals()[key]
+            print(key + ' saved as dataframe! ')
+        except TypeError:
+            print('ERROR shelving: {0}'.format(key))
+my_shelf.close()
+
+# reload data
+my_shelf = shelve.open(shelve_filename)
+for key in my_shelf:
+    globals()[key]=my_shelf[key]
+my_shelf.close()
