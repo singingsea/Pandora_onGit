@@ -5,8 +5,9 @@ Created on Tue Oct 31 16:06:26 2017
 @author: ZhaoX
 """
 
-from IPython import get_ipython ## house keeping, first two lines to clear workspace
-get_ipython().magic('reset -sf') 
+#from IPython import get_ipython ## house keeping, first two lines to clear workspace
+#get_ipython().magic('reset -sf') 
+
 import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.dates as dates
@@ -236,33 +237,33 @@ def main(input_df):
     else:
         print('\n \n>>>Warning : no measurements left after apply filters, no daily plots will be made.\n' )
         
-    #%% ************* 6. save new dataframe, include calibrated SO2 VCDs*********************
-    if input_df.weekly_processing == False:# we will save filtered VCDs, only if this is not auto-weekly processing
-        shelve_filename = plot_path + 'BlickP_filtered_VCD_' + gas_type + '_' + instrument_name +'.out'   
-        
-        # save data to shelve
-        my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
-    
-        #for key in dir():
-        for key in globals():
-            #print(key)
-            if key.find('df_Blick') != -1:
-                try:
-                    my_shelf[key] = globals()[key]
-                    print('\n \n>>>"' + key + '" : data successfully saved! ')
-                except TypeError:
-                    print('ERROR shelving: {0}'.format(key))
-            else:
-                #print('key not matched')
-                pass
-        my_shelf.close()
-        
-        # load data to shelve
-        my_shelf = shelve.open(shelve_filename)
-        for key in my_shelf:
-            globals()[key]=my_shelf[key]
-        my_shelf.close()
-    
+#    #%% ************* 6. save new dataframe, include calibrated SO2 VCDs*********************
+#    if input_df.weekly_processing == False:# we will save filtered VCDs, only if this is not auto-weekly processing
+#        shelve_filename = plot_path + 'BlickP_filtered_VCD_' + gas_type + '_' + instrument_name +'.out'   
+#        
+#        # save data to shelve
+#        my_shelf = shelve.open(shelve_filename,'n') # 'n' for new
+#    
+#        #for key in dir():
+#        for key in globals():
+#            #print(key)
+#            if key.find('df_Blick') != -1:
+#                try:
+#                    my_shelf[key] = globals()[key]
+#                    print('\n \n>>>"' + key + '" : data successfully saved! ')
+#                except TypeError:
+#                    print('ERROR shelving: {0}'.format(key))
+#            else:
+#                #print('key not matched')
+#                pass
+#        my_shelf.close()
+#        
+#        # load data to shelve
+#        my_shelf = shelve.open(shelve_filename)
+#        for key in my_shelf:
+#            globals()[key]=my_shelf[key]
+#        my_shelf.close()
+#    
 #%%
 if __name__ == '__main__':
     import sys
