@@ -24,4 +24,5 @@ for file_name in src_files:
     if (os.path.isfile(full_file_name)): # only copy files
         if (full_file_name.find('Pandora' + instrument_no) != -1) & (full_file_name.find('L0.txt') != -1): # only copy files that have name "PandoraXXX" end "L0.txt"
             if not os.path.exists(os.path.join(BlickP_L0_path, file_name)): # check if the file has already existed in BlickP L0 foler
-                shutil.copy(full_file_name, BlickP_L0_path)
+                if not os.path.getsize(full_file_name) == 0: # only copy non-zero size L0 file
+                    shutil.copy(full_file_name, BlickP_L0_path)
