@@ -8,23 +8,22 @@ Created on Wed Dec 13 15:20:02 2017
 # this is for setting schedual for run BlickP.exe, more details can be found in auto_BlickP_precess.py, 
 auto_processing_schedual_step1 = {
         'Monday': 'Pandora108', 
-        'Tuesday': 'Pandora104', 
-        'Wednesday':'Pandora108' ,
-        'Thursday':'Pandora109' ,
-        'Friday':'Pandora122' ,
-        'Saturday':'Pandora123' 
+        'Tuesday': 'Pandora109', 
+        'Wednesday':'Pandora122' ,
+        'Thursday':'Pandora123' ,
+        'Friday':'Pandora103' ,
+        'Saturday':'Pandora104' 
         }
 
 # this is for setting schedual for reformat BlickP L2 data and making daily plots
 # more details can be found in BlickP_L2_batch_run.py and BlickP_daily_VCD_plot_batch_run.py
 auto_processing_schedual_step2 = {
-        'Monday': 'Pandora108', 
-        'Tuesday': 'Pandora103', 
-        'Wednesday':'Pandora104' ,
-        'Thursday':'Pandora108' ,
-        'Friday':'Pandora109' ,
-        'Saturday':'Pandora122' ,
-        'Sunday' : 'Pandora123',
+        'Tuesday': 'Pandora108', 
+        'Wednesday':'Pandora109' ,
+        'Thursday':'Pandora122' ,
+        'Friday':'Pandora123' ,
+        'Saturday':'Pandora103' ,
+        'Sunday' : 'Pandora104'
         }
 
 # python datetime weekday --> Monday is 0, Tuesday is 1
