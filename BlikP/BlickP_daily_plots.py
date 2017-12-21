@@ -191,17 +191,17 @@ def main(input_df):
     #%% ************* 3. filtering the data *********************
     initial_size = len(df_Blick)
 
-    df_Blick = df_Blick[df_Blick[L2_fit_quality_column_nm] <= 0]
-    df_Blick = df_Blick[df_Blick[integration_time_column_nm] <= 500]
-    df_Blick = df_Blick[df_Blick[AMF_column_nm] <= 5]
-    
-    
-    df_Blick_2mu = df_Blick[df_Blick[AMF_column_nm] <= 2]
-    df_Blick_3mu = df_Blick[df_Blick[AMF_column_nm] > 2][df_Blick[AMF_column_nm] <= 3]
-    df_Blick_5mu = df_Blick[df_Blick[AMF_column_nm] > 3][df_Blick[AMF_column_nm] <= 5]
-    df_Blick_2mu = df_Blick_2mu[df_Blick_2mu[integration_time_column_nm] <= 100]
-    df_Blick_3mu = df_Blick_3mu[df_Blick_3mu[integration_time_column_nm] <= 300]    
-    df_Blick = pd.concat([df_Blick_2mu,df_Blick_3mu,df_Blick_5mu], ignore_index = True)
+#    df_Blick = df_Blick[df_Blick[L2_fit_quality_column_nm] <= 0]
+#    df_Blick = df_Blick[df_Blick[integration_time_column_nm] <= 500]
+#    df_Blick = df_Blick[df_Blick[AMF_column_nm] <= 5]
+#    
+#    
+#    df_Blick_2mu = df_Blick[df_Blick[AMF_column_nm] <= 2]
+#    df_Blick_3mu = df_Blick[df_Blick[AMF_column_nm] > 2][df_Blick[AMF_column_nm] <= 3]
+#    df_Blick_5mu = df_Blick[df_Blick[AMF_column_nm] > 3][df_Blick[AMF_column_nm] <= 5]
+#    df_Blick_2mu = df_Blick_2mu[df_Blick_2mu[integration_time_column_nm] <= 100]
+#    df_Blick_3mu = df_Blick_3mu[df_Blick_3mu[integration_time_column_nm] <= 300]    
+#    df_Blick = pd.concat([df_Blick_2mu,df_Blick_3mu,df_Blick_5mu], ignore_index = True)
     df_Blick = df_Blick.sort_values('LTC')
     df_Blick.index = df_Blick.LTC
     
