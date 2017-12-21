@@ -60,7 +60,7 @@ def read_BlickP_L2(file_nm):
 #%%
 def plot_BlickP_L2(df,file_nm):
     # L2 data quality flag for fitted gas : 0=high quality, 1=medium quality, 2=low quality 
-    L2_QF = 0 
+    L2_QF = 2
     
     if file_nm.find('rout0') != -1:
         df = df[:][df['Column 11: L2 data quality flag for ozone: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]

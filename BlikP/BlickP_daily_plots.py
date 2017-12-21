@@ -191,7 +191,7 @@ def main(input_df):
     #%% ************* 3. filtering the data *********************
     initial_size = len(df_Blick)
 
-#    df_Blick = df_Blick[df_Blick[L2_fit_quality_column_nm] <= 0]
+    df_Blick = df_Blick[df_Blick[L2_fit_quality_column_nm] <= 1]
 #    df_Blick = df_Blick[df_Blick[integration_time_column_nm] <= 500]
 #    df_Blick = df_Blick[df_Blick[AMF_column_nm] <= 5]
 #    
