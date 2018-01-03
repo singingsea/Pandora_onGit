@@ -121,7 +121,7 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
 
                 #plt.clf()
                 
-                plt.close(fig)
+            plt.close(fig)
         
 
 
