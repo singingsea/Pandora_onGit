@@ -116,7 +116,8 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
                     daylabel = str(day.day)
                 timelabel = str(day.year) + monthlabel + daylabel
                 
-                fig.savefig(plot_path + instrument[0] + '_' + str(location) + '_BlickP_' + gas_type + '_VCD_'+ timelabel +'.png',dpi=600, facecolor='w' )
+                #fig.savefig(plot_path + instrument[0] + '_' + str(location) + '_BlickP_' + gas_type + '_VCD_'+ timelabel +'.png',dpi=600, facecolor='w' )
+                plt.savefig(plot_path + instrument[0] + '_' + str(location) + '_BlickP_' + gas_type + '_VCD_'+ timelabel +'.png',dpi=600, facecolor='w' )
                 #plt.show()
 
                 #plt.clf()
