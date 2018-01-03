@@ -53,7 +53,7 @@ def read_BlickP_L2(file_nm):
 #%%
 def plot_BlickP_L2(df,file_nm):
     # L2 data quality flag for fitted gas : 0=high quality, 1=medium quality, 2=low quality 
-    L2_QF = 0 
+    L2_QF = 1 
     
     if file_nm.find('rout0') != -1:
         df = df[:][df['Column 11: L2 data quality flag for ozone: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]
@@ -135,6 +135,7 @@ def plot_BlickP_L2(df,file_nm):
 filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\Blick\\L2\\' # Pandora109 Ozone, NO2, SO2, and HCHO data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\Blick\\L2\\' # Pandora123 Ozone, NO2, SO2, and HCHO data on Brewer server
+#filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\122\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
 plotpath = filepath
 shelve_filename = filepath + 'Blick_L2' + '.out' 
 
