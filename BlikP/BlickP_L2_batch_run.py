@@ -63,31 +63,40 @@ def plot_BlickP_L2(df,file_nm):
     L2_QF = 2
     
     if file_nm.find('rout0') != -1:
-        df = df[:][df['Column 11: L2 data quality flag for ozone: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]
-        y = df['Column 8: Ozone total vertical column amount [Dobson Units], -9e99=retrieval not successful']
-        y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
+        L2_QF_column_nm = 'Column 11: L2 data quality flag for ozone: 0=high quality, 1=medium quality, 2=low quality'
+        y_column_nm = 'Column 8: Ozone total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'        
         ylabel_1 = 'Ozone'
     elif file_nm.find('rnvs0') != -1:
-        df = df[:][df['Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]
-        y = df['Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful']
-        y_rms = df['Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
+        L2_QF_column_nm = 'Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        y_column_nm = 'Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
         ylabel_1 = 'NO2'
     elif file_nm.find('rfus0') != -1:
-        df = df[:][df['Column 11: L2 data quality flag for formaldehyde: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]
-        y_rms = df['Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
-        y = df['Column 8: Formaldehyde total vertical column amount [Dobson Units], -9e99=retrieval not successful']
+        L2_QF_column_nm = 'Column 11: L2 data quality flag for formaldehyde: 0=high quality, 1=medium quality, 2=low quality'
+        y_column_nm = 'Column 8: Formaldehyde total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
         ylabel_1 = 'HCHO'
     elif file_nm.find('rsut1') != -1:
-        df = df[:][df['Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]
-        y = df['Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful']
+        L2_QF_column_nm = 'Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        y_column_nm = 'Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
         y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
         ylabel_1 = 'SO2'
     elif file_nm.find('rsut2') != -1:
-        df = df[:][df['Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'] <= L2_QF]
-        y = df['Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful']
+        L2_QF_column_nm = 'Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        y_column_nm = 'Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
         y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
         ylabel_1 = 'SO2'
-        
+
+    df = df[:][df[L2_QF_column_nm] <= L2_QF]
+    groups = df.groupby(L2_QF_column_nm)
+    L2_QF_labels =  pd.unique(df[L2_QF_column_nm]).tolist()
+    L2_QF_labels.sort(reverse=True)
+    y = df[y_column_nm]
+    y_rms = df[y_rms_column_nm]
+    
     x = list(map(dateutil.parser.parse, df['Column 1: UT date and time for center of measurement, yyyymmddThhmmssZ (ISO 8601)']))
     
     font = {'family' : 'DejaVu Sans', 'weight' : 'bold', 'size'   : 12}
@@ -96,23 +105,33 @@ def plot_BlickP_L2(df,file_nm):
     
     gs = gridspec.GridSpec(2, 2, height_ratios=[3, 1], width_ratios=[3, 1]) 
     
-    ax0 = plt.subplot(gs[0])
-    ax0.plot(x, y,'r.', label = 'VCD')
+    ax0 = plt.subplot(gs[0]) 
+    #ax0.plot(x, y,'r.', label = 'VCD')
+    for L2_QF_label in L2_QF_labels:
+        x_group = groups.get_group(L2_QF_label).LTC
+        y_group = groups.get_group(L2_QF_label)[y_column_nm]
+        ax0.plot(x_group, y_group, '.',label = ['L2 QF = ' + str(L2_QF_label)])      
     ax0.grid()
     ax0.set_ylabel(ylabel_1 + ' VCD [DU]')
     ax0.set_xlabel('Time')
     ax0.legend()
     ax0.set_title(file_nm)
-    ax0.legend(['L2 data : quality flag <= ' + str(L2_QF)])
+    #ax0.legend(['L2 data : quality flag <= ' + str(L2_QF)])
     
     ax1 = plt.subplot(gs[1])
-    hist, bins = np.histogram(y, bins=50, normed=1)
+    hist, bins = np.histogram(y, bins=50, normed=1) 
     width = 0.7 * (bins[1] - bins[0])
     center = (bins[:-1] + bins[1:]) / 2
-    plt.bar(center, hist, align='center', width=width)
+    #plt.bar(center, hist, align='center', width=width)
+    for L2_QF_label in L2_QF_labels:
+        y_group = groups.get_group(L2_QF_label)[y_column_nm]
+        hist, bins = np.histogram(y_group, bins=50) 
+        plt.bar(center, hist, align='center', width=width, label = L2_QF_label)
     ax1.grid()
     ax1.set_ylabel('f')
     ax1.set_xlabel(ylabel_1 + ' VCD [DU]')   
+    ax1.legend()
+    
     
         
     ax2 = plt.subplot(gs[2])    
@@ -122,6 +141,7 @@ def plot_BlickP_L2(df,file_nm):
     #ax2.set_ylim([0, 0.02])    
     ax2.set_xlabel('Time')
     ax2.legend()
+    ax2.legend(['L2 data : quality flag <= ' + str(L2_QF)])
     
     ax3 = plt.subplot(gs[3])    
     hist, bins = np.histogram(y_rms, bins=50, normed=1)
