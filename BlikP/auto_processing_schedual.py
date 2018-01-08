@@ -12,12 +12,14 @@ auto_processing_schedual_step1 = {
         'Wednesday':'Pandora122' ,
         'Thursday':'Pandora123' ,
         'Friday':'Pandora103' ,
-        'Saturday':'Pandora104' 
+        'Saturday':'Pandora104' ,
+        'Sunday' : 'Pandora122'
         }
 
 # this is for setting schedual for reformat BlickP L2 data and making daily plots
 # more details can be found in BlickP_L2_batch_run.py and BlickP_daily_VCD_plot_batch_run.py
 auto_processing_schedual_step2 = {
+        'Monday' : 'Pandora122',
         'Tuesday': 'Pandora108', 
         'Wednesday':'Pandora109' ,
         'Thursday':'Pandora122' ,
