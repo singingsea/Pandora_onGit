@@ -1,0 +1,10 @@
+#Schedule used to check tracker performance
+
+#This schedule is typically used after intrument installation and manual sun alignment (i.e. routine FI) to check the performance of the tracker.
+#It simply alternates between a sun search (FA) and a sequence of tracker-movements in all directions (TR).
+#If the tracker performs well, then the sun searches will be successful (i.e. small angular offsets in the FA routine).
+#If the tracker is defective, then the sun searches will not be successful.
+#This schedule is usually not run for more than about 30min.
+
+solarzen90am fa b 2 solarzen90pm
+fatr

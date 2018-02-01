@@ -1,0 +1,70 @@
+# Schedule-template for direct sun, direct moon, and sky observations in one azimuth direction for Pandora-2S systems
+# The schedule is split in 6 regimes:  1) high sun daytime (SZA<65)
+#                                      2) medium sun daytime (65<SZA<80)
+#                                      3) low sun daytime (80<SZA<87)
+#                                      4) before sunset or after sunrise (87<SZA<90)
+#                                      5) twilight (90<SZA<96)
+#                                      6) nighttime (SZA>96)
+# The types and frequency of measurements being done change from regime to regime.
+# The sky observations around sunrise and sunset (87deg<SZA<96deg) are zenith sky only.
+
+# 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+# Regime 1: high sun daytime (SZA<65); direct sun and sky measurements
+# Make sure you customize the azimuth used in routines e* (i.e. edit files <EO.rout> etc.)!
+solarzen65am rf b 1 solarzen65pm
+rftdfs(soeosueusosueusu3)elsu
+
+# 222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+# Regime 2 (pm): medium sun daytime (65<SZA<80); direct sun and sky measurements
+solarzen65pm rf b 1 solarzen80pm
+rftdfs(soeosueusosueusu2)elsu
+
+# 333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+# Regime 3 (pm): low sun daytime (80<SZA<87); direct sun and sky measurements
+solarzen80pm rf b 1 solarzen87pm
+rftdfs(soeosusoelsu2)
+
+# 444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+# Regime 4 (pm): before sunset (87<SZA<90); direct sun and zenith sky measurements
+solarzen87pm rf b 1 solarzen90pm
+rftdfs(sosuzozusuzu4)
+
+# 555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+# Regime 5 (pm): evening twilight (90<SZA<96); direct moon with sky reference and zenith sky measurements
+solarzen90pm rf b 1 solarzen96pm
+rftdfm(zomtmdzumt4)
+
+# 666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+# Regime 6 (pm): nighttime before local midnight (SZA>96); direct moon measurements
+solarzen96pm rf b 1 solarmidnight-0:05
+rftdfm(momumu6)
+
+# DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+# Diagnostic routines
+solarmidnight-0:05 dt b 2
+dtdcdm
+
+# 666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+# Regime 6 (am): nighttime after local midnight (SZA>96); direct moon measurements
+solarmidnight-0:05 rf b 1 solarzen96am
+rftdfm(momumu6)
+
+# 555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+# Regime 5 (am): morning twilight (90<SZA<96); direct moon with sky reference and zenith sky measurements
+solarzen96am rf b 1 solarzen90am
+rftdfm(zomtmdzumu4)
+
+# 444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+# Regime 4 (am): after sunrise (87<SZA<90); direct sun and zenith sky measurements
+solarzen90am rf b 1 solarzen87am
+rftdfs(sosuzozusuzu3)
+
+# 333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+# Regime 3 (am): low sun daytime in the morning (80<SZA<87); direct sun and sky measurements
+solarzen87am rf b 1 solarzen80am
+rftdfs(soeosusoelsu2)
+
+# 222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+# Regime 2 (am): medium sun daytime (65<SZA<80); direct sun and sky measurements
+solarzen80am rf b 1 solarzen65am
+rftdfs(soeosueusosueusu2)elsu

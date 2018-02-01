@@ -1,0 +1,33 @@
+#Schedule-template for direct sun and direct moon observations for Pandora-1S systems
+#The schedule is split in 3 regimes: daytime (SZA<90), twilight (90<SZA<96), and nighttime (SZA>96).
+#The types of measurements being done are changing from regime to regime.
+
+#111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+#Regime 1: daytime (SZA<90); direct sun
+solarzen90am rf b 1 solarzen90pm
+rftdfs(sosu18)
+
+#222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+#Regime 2 (pm): evening twilight (90<SZA<96); direct moon
+solarzen90pm fm b 3 solarzen96pm
+rftdfm(mdmt6)
+
+#333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+#Regime 3 (before local midnight): nighttime (SZA>96); direct moon
+solarzen96pm rf b 1 solarmidnight-0:05
+rftdfm(momu6)
+
+#DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+#Diagnostic routines
+solarmidnight-0:05 dt b 2
+dtdcdm
+
+#333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+#Regime 3 (after local midnight): nighttime (SZA>96); direct moon
+solarmidnight-0:05 rf b 1 solarzen96am
+rftdfm(momu6)
+
+#222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+#Regime 2 (am): morning twilight (90<SZA<96); direct moon
+solarzen96am rf b 1 solarzen90am
+rftdfm(mdmt6)

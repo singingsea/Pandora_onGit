@@ -1,0 +1,12 @@
+#Schedule used for instrument alignment
+
+#This schedule is typically used after the correct tracker performance has been verified with schedule 'startup'.
+#Its goal is to establish an initial 'alignment history', so that the software can determine the leveling of the instrument.
+#The schedule consists of frequent sun searches (FA) and direct sun observations (SO).
+#It should be run as long as need to obtain successful sun searches with the sun being at very different position in the sky.
+#This can be obtained e.g. with one full clear sky day or with 2-3 fractional clear sky days, where the sun-free windows happen at different times of the day.
+
+solarzen90am rf b 2 solarzen90pm
+rffafdfu(fqso5)
+then dt b 1
+dtdc
