@@ -1,0 +1,6 @@
+#Schedule-template for direct sun observations using Pandora-1S systems
+
+solarzen90am rf b 3 solarzen90pm
+rftd(sosu18)fs
+then dt b 2
+dtdc
