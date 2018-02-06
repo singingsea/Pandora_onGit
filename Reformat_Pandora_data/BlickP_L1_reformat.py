@@ -94,7 +94,7 @@ def QDOAS_ASCII_formater_header(df):
                 'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]'
                 ]]
 
-        df_sp[:,'datetime'] = pd.to_datetime(df_sp[:,'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)'], utc = True)
+        df_sp['datetime'] = pd.to_datetime(df_sp['Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)'], utc = True)
         
 
         # add timestamp
