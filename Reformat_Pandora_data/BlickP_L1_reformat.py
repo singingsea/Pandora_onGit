@@ -208,12 +208,18 @@ for idx, file_name in enumerate(src_files):
                 print(' >>> Formating ' + file_name + '[' +str(idx/len(src_files)*100) + ']')
                 print('     read BlickP L1 file ... ')
                 df = read_BlickP_L1(full_file_name)
-                print('     prepare header of the spe file ... ')
-                df_header = QDOAS_ASCII_formater_header(df)
-                print('     prepare spectrum of the spe file ... ')
-                df_spec = df.iloc[:,63:2111]
-                print('     writting to QDOAS spe file ... ')
-                QDOAS_ASCII_formater_write(df_header,df_spec,file_name)
+                height, width = df.shape
+                if height == 0:
+                    print('     an empty L1 file, escape from reformat ... ')
+                else:
+                    print('     prepare header of the spe file ... ')
+                    df_header = QDOAS_ASCII_formater_header(df)
+                    print('     prepare spectrum of the spe file ... ')
+                    df_spec = df.iloc[:,63:2111]
+                    print('     writting to QDOAS spe file ... ')
+                    QDOAS_ASCII_formater_write(df_header,df_spec,file_name)
+                    del df_header, df_spec
+                del df 
                 
                 #no_ZS = check_ZS_modes(full_file_name, df)
                 #total_ZS += no_ZS
