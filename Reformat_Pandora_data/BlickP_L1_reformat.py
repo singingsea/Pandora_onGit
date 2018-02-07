@@ -15,7 +15,7 @@ import numpy as np
 instrument_no = 108
 process_all_files = False # process all files in L1 folder, or just for a period
 #start_date = datetime.datetime(2018,1,15) # use 'yyyy-mm-dd' format, this only used if process_all_files = False
-start_date = '2018-01-11'
+start_date = '2018-01-10'
 end_date = '2018-01-12' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
 # the location, lat, lon, and alt information will be direactly read from L1 file
 
@@ -37,9 +37,6 @@ Measurement_Type_Index_dict = {
         8 : 'LAMP',
         9 : 'SPECIAL'
         }
-
-
-
 
 #%%
 def read_BlickP_L1(file_nm):
@@ -103,6 +100,8 @@ def QDOAS_ASCII_formater_header(df):
                 'Column 6: Total duration of measurement set in seconds',
                 'Column 7: Data processing type index',
                 'Column 8: Integration time [ms]',
+                'Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions',
+                'Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions',
                 'Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used',
                 'Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon',
                 'Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used',
@@ -155,7 +154,10 @@ def QDOAS_ASCII_formater_header(df):
         df_output['VEA'] = ''# viewing elevation angle angle [deg]
         df_output['fd'] = ''
         df_output['Scale_factor'] = df_sp['Column 61: Scale factor for data, to obtain unscaled output divide data by this number']
+        df_output['FW1'] = df_sp['Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions']
+        df_output['FW2'] = df_sp['Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions']
         
+                
         # make measurement type column
         df_output['Measurement_Type_Index'] = df_sp['Column 7: Data processing type index'] # this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
         df_output['Measurement_Type'] = ''
@@ -211,6 +213,8 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
         f.write('# Instrument = Pandora ' + str(instrument_no) + '\n')
         f.write('# Size of the detector = 2048 (the size of the detector as indication)' + '\n')
         f.write('# Total number of records = ' + str(len(df_header)) + '\n')
+        f.write('# Filter wheel 1 positions = ' + str(pd.unique(df_header.FW1)) + '\n')
+        f.write('# Filter wheel 2 positions = ' + str(pd.unique(df_header.FW2)) + '\n')
         
         for i in range(len(df_header)):
             f.write('Date(DD/MM/YYY) = ' + str(df_header.Date[i]) + '\n')
@@ -235,6 +239,7 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
             for j in range(width):
                 spec = df_spec.iloc[i,:]/df_header.Scale_factor[i]
                 f.write('\t' + str(spec[j]) + '\n')
+    
 #%%
 import os
 import shutil
@@ -268,12 +273,12 @@ for idx, file_name in enumerate(src_files):
                         print(' >>> Formating ' + file_name )
                     print('     read BlickP L1 file ... ')
                     df, instrument_no_infile, location, lat, lon, alt = read_BlickP_L1(full_file_name) # read L1 file
-                    
+
                     # check if we have same instrument number as indicated 
                     if instrument_no_infile != instrument_no: 
                         print('     Warning, instrument number found in L1 file does not match with input value! Will record the true value found in L1 file into spe file. ')
-                        instrument_no = instrument_no_infile                
-                        
+                        instrument_no = instrument_no_infile  
+                       
                     height, width = df.shape
                     if height == 0: # check if the L1 file is "empty"
                         print('     an empty L1 file, escape from reformat ... ')
@@ -283,10 +288,38 @@ for idx, file_name in enumerate(src_files):
                         print('     prepare spectrum of the spe file ... ')
                         df_spec = df.iloc[:,63:2111] # prepare spectrum  part of the spe file, note here the spec is scaled value!
                         print('     writting to QDOAS spe file ... ')
-                        QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, location, lat, lon, alt)
+                        
+                        # speration of modes
+                        Measurement_Types = pd.unique(df_header.Measurement_Type)
+                        #FW1_Types = pd.unique(df_header.FW1)
+                        FW2_Types = pd.unique(df_header.FW2)
+                        # loop over all measurement types found in this L1 file
+                        for Measurement_Type in Measurement_Types:   
+                            # loop over all Filter wheel #2 positions found in this L1 file
+                            for FW2_Type in FW2_Types:
+                                TF1 = df_header.Measurement_Type == Measurement_Type
+                                TF2 = df_header.FW2 == FW2_Type
+                                TF = TF1 & TF2
+                                if sum(TF) !=0: # if a combination of measurement type and FW2 position is not empty, then we will write it to an spe file
+                                    if (FW2_Type == 2) | (FW2_Type == 5): # note, Filter wheel #2 index = 2 or 5 used U340 filter. This might be changed, so, verify this information from Pandora OF file!
+                                        seperation_label = Measurement_Type.replace(' ','_') + '_U340_' # again, FW2 = 2 or 5 used U340! 
+                                    else:
+                                        seperation_label = Measurement_Type.replace(' ','_') + '_OPEN_' # this means no U340 used, but a ND or diffuser might be!
+                                    print('     writting ' + seperation_label + ' type file ... ')    
+                                    # get header part of one type of measurement
+                                    df_header_subset = df_header[df_header.Measurement_Type == Measurement_Type][df_header.FW2 == FW2_Type]
+                                    # get spectrum part of one type of measurement
+                                    df_spec_subset = df_spec[df_header.Measurement_Type == Measurement_Type][df_header.FW2 == FW2_Type]
+                                    # reset subsets' index
+                                    df_header_subset.reset_index(drop=True,inplace = True)
+                                    df_spec_subset.reset_index(drop=True,inplace = True)
+                                    # give the subset a unique name
+                                    file_name_subset = seperation_label + file_name
+                                    # write the subset to spe file
+                                    QDOAS_ASCII_formater_write(df_header_subset,df_spec_subset,file_name_subset, instrument_no, location, lat, lon, alt)
                         del df_header, df_spec
                     del df, location, lat, lon, alt 
-                    
+                  
                     #no_ZS = check_ZS_modes(full_file_name, df)
                     #total_ZS += no_ZS
                 
