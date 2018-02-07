@@ -11,11 +11,14 @@ import pandas as pd
 from pysolar.solar import *
 import datetime
 import dateutil.parser
+import numpy as np
 instrument_no = 108
-location = 'Downsview'
-lat = 43.7810
-lon = -79.4680
-alt = 187
+process_all_files = False # process all files in L1 folder, or just for a period
+#start_date = datetime.datetime(2018,1,15) # use 'yyyy-mm-dd' format, this only used if process_all_files = False
+start_date = '2018-01-11'
+end_date = '2018-01-12' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
+# the location, lat, lon, and alt information will be direactly read from L1 file
+
 L1_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\L1\\'
 spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe\\'
 
@@ -48,6 +51,19 @@ def read_BlickP_L1(file_nm):
     read_column_names = False
     while header_part_ind != 2: # the data part start after read in '----' twice
         header = f.readline() # read in a line of the file
+        if header.find('Instrument number: ') != -1: # find instrument number    
+            instrument_no = float(header[len('Instrument number: '):])
+        if header.find('Short location name: ') != -1: # find 'Short location name'
+            location = header[len('Short location name: '):]
+            if location.find('\n'):
+                location = location[:-1]
+        if header.find('Location latitude [deg]: ') != -1: # find 'latitude'    
+            lat = float(header[len('Location latitude [deg]: '):])
+        if header.find('Location longitude [deg]: ') != -1: # find 'longitude'    
+            lon = float(header[len('Location longitude [deg]: '):])
+        if header.find('Location altitude [m]: ') != -1: # find 'altitude'    
+            alt = float(header[len('Location altitude [m]: '):])
+            
         No_header_lines += 1 # count how many lines belong to header
         if header.find('----') != -1: # find '----' symble
             header_part_ind += 1
@@ -64,12 +80,13 @@ def read_BlickP_L1(file_nm):
         column_names.append('L1_' + str(spec_data_column)) 
         
   
-    
+       
     #print(No_header_lines)
     f.close()           
                           
     df = pd.read_csv(file_nm, sep='\s+', header=None, names = column_names, skiprows= No_header_lines) # read in data use Pandas frame
-    return df
+   
+    return df, instrument_no, location, lat, lon, alt
 
 #%%
 def check_ZS_modes(full_file_name, df):
@@ -98,26 +115,33 @@ def QDOAS_ASCII_formater_header(df):
         
 
         # add timestamp
-        print('Convert ISO 8601 time to Python-dateutil datetime')
+        print('     Convert ISO 8601 time to Python-dateutil datetime')
         df_sp['time'] = list(map(dateutil.parser.parse, df_sp['Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)']))
         # add UTC and LTC
-        print('Add UTC column to dataframe')              
+        print('     Add UTC column to dataframe')              
         df_sp['UTC'] = df_sp.time.dt.tz_convert('UTC')
         if location in sites_list_LSC.keys():
             #print('Add LTC column to dataframe')              
             #df_sp['LTC'] = df_sp.time.dt.tz_convert(sites_list_LTC[location])
-            print('Add LSC column to dataframe')              
+            print('     Add LSC column to dataframe')              
             df_sp['LSC'] = df_sp.time.dt.tz_convert(sites_list_LSC[location])
-       
+        else:
+            print('     Warning: the location of the measurements was non included in sites list!')   
+            print('     ' + location)   
         # calcuate SZA
-        print('Add SZA and SAA column to dataframe')  
+        print('     Add SZA and SAA column to dataframe')  
         df_sp['SZA'] = '' 
         df_sp['SAA'] = '' 
+        
+        calculated_SZA = np.zeros(shape=(len(df_sp),1))
+        calculated_SAA = np.zeros(shape=(len(df_sp),1))
         for i in range(len(df_sp)):
-            SZA = 90 - get_altitude(lat, lon, df_sp.LSC[i])
-            df_sp.SZA[i] = SZA
-            SAA = get_azimuth(lat, lon, df_sp.LSC[i])
-            df_sp.SAA[i] = SAA
+            calculated_SZA[i] = 90 - get_altitude(lat, lon, df_sp.LSC[i])          
+            calculated_SAA[i] = get_azimuth(lat, lon, df_sp.LSC[i])
+        # assign the calculated SZA and SAA to dataframe   
+        df_sp.SZA = calculated_SZA
+        df_sp.SAA = calculated_SAA
+        
         
         df_output = pd.DataFrame()
         df_output['UTC'] = df_sp.UTC
@@ -136,26 +160,37 @@ def QDOAS_ASCII_formater_header(df):
         df_output['Measurement_Type_Index'] = df_sp['Column 7: Data processing type index'] # this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
         df_output['Measurement_Type'] = ''
         for i in range(len(df_sp)):
-            df_output.Measurement_Type[i] = Measurement_Type_Index_dict[df_output.Measurement_Type_Index[i]]
-            
+            col_num = df_output.columns.get_loc('Measurement_Type')
+            try:
+                df_output.iat[i,col_num] = Measurement_Type_Index_dict[df_output.Measurement_Type_Index[i]]
+            except:
+                print(str(df_output.Measurement_Type_Index[i]))
+                     
         # make elevation viewing angle column
+        col_nm_VEA = df_output.columns.get_loc('VEA')
+        col_nm_VAA = df_output.columns.get_loc('VAA')
+        col_nm_PZA = df_sp.columns.get_loc('Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used')
+        col_nm_PAA = df_sp.columns.get_loc('Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used')
+        col_nm_SZA = df_sp.columns.get_loc('SZA')
+        col_nm_SAA = df_sp.columns.get_loc('SAA')
         for i in range(len(df_sp)):
-            if df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 0:
-                df_output.VEA[i] = 90 - df_sp['Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used'][i]
+            if df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 0:               
+                df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_PZA]
             elif df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 1:
-                df_output.VEA[i] = 90 - df_sp.SZA[i] - df_sp['Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used'][i]
+                df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_SZA] - df_sp.iat[i,col_nm_PZA]
             elif df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 2:
                 print('Warning: we do not calcualte moon location!')  
-                df_output.VEA[i] = 'NaN'
+                df_output.iat[i,col_nm_VEA] = 'NaN'
+                
         # make azimuth viewing angle column        
-        for i in range(len(df_sp)):
+        for i in range(len(df_sp)):            
             if df_sp['Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)'][i] == 0:
-                df_output.VAA[i] = df_sp['Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used'][i]
+                df_output.iat[i,col_nm_VAA] = df_sp.iat[i,col_nm_PAA]
             elif df_sp['Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)'][i] == 1:
-                df_output.VAA[i] = df_sp.SAA[i] - df_sp['Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used'][i]
+                df_output.iat[i,col_nm_VAA] = df_sp.iat[i,col_nm_SAA] - df_sp.iat[i,col_nm_PAA]
             elif df_sp['Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)'][i] == 2:
                 print('Warning: we do not calcualte moon location!')  
-                df_output.VAA[i] = 'NaN'     
+                df_output.iat[i,col_nm_VAA] = 'NaN'     
         
         # make fractional day column
         #for i in range(len(df_sp)):
@@ -166,7 +201,7 @@ def QDOAS_ASCII_formater_header(df):
             
         return df_output    
 #%%
-def QDOAS_ASCII_formater_write(df_header,df_spec,file_name):
+def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, location, lat, lon, alt):
     spefilename = spe_file_path + file_name[:-4] + '.spe'
     with open(spefilename, 'w') as f:
         
@@ -191,6 +226,11 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name):
             f.write('Solar Zenith Angle (deg) = ' + str(df_header.SZA[i]) + '\n')
             f.write('Solar Azimuth Angle (deg) = ' + str(df_header.SAA[i])  + ' (North=0, East=90)' + '\n')
             
+            f.write('Latitude = ' + str(lat) + '\n')
+            f.write('Longitude = ' + str(lon) + '\n')
+            f.write('Altitude = ' + str(alt) + '\n')
+            
+
             height, width = df_spec.shape
             for j in range(width):
                 spec = df_spec.iloc[i,:]/df_header.Scale_factor[i]
@@ -200,29 +240,55 @@ import os
 import shutil
 total_ZS = 0
 src_files = os.listdir(str(L1_file_path))
+
+if process_all_files == False:
+    start_date = pd.to_datetime(start_date,utc=True)
+    end_date = pd.to_datetime(end_date,utc=True)
+    
 for idx, file_name in enumerate(src_files):
+    date_on_filename = file_name[file_name.find('_L1')-8:file_name.find('_L1')]
+    date_on_filename = pd.to_datetime(date_on_filename,utc=True)
+    
+    # check if we want process all files in the L1 data folder, or just for a period
+    process_this_L1_file = False
+    if process_all_files == True:
+        process_this_L1_file = True
+    else:
+        if (date_on_filename >= start_date) & (date_on_filename <= end_date):
+           process_this_L1_file = True     
+    
     full_file_name = os.path.join(L1_file_path, file_name) # creat full file name (including path)
     if (os.path.isfile(full_file_name)): # only get files
         if (full_file_name.find('Pandora' + str(instrument_no)) != -1) & (full_file_name.find('L1') != -1): # only get files that have name "PandoraXXX" and "L1"
             if not os.path.getsize(full_file_name) == 0: # only copy non-zero size L0 file
-                print(' >>> Formating ' + file_name + '[' +str(idx/len(src_files)*100) + ']')
-                print('     read BlickP L1 file ... ')
-                df = read_BlickP_L1(full_file_name)
-                height, width = df.shape
-                if height == 0:
-                    print('     an empty L1 file, escape from reformat ... ')
-                else:
-                    print('     prepare header of the spe file ... ')
-                    df_header = QDOAS_ASCII_formater_header(df)
-                    print('     prepare spectrum of the spe file ... ')
-                    df_spec = df.iloc[:,63:2111]
-                    print('     writting to QDOAS spe file ... ')
-                    QDOAS_ASCII_formater_write(df_header,df_spec,file_name)
-                    del df_header, df_spec
-                del df 
-                
-                #no_ZS = check_ZS_modes(full_file_name, df)
-                #total_ZS += no_ZS
+                if process_this_L1_file == True:
+                    if process_all_files == True:
+                        print(' >>> Formating ' + file_name + ' [' +str(idx/len(src_files)*100) + '% finished ... ]')
+                    else:
+                        print(' >>> Formating ' + file_name )
+                    print('     read BlickP L1 file ... ')
+                    df, instrument_no_infile, location, lat, lon, alt = read_BlickP_L1(full_file_name) # read L1 file
+                    
+                    # check if we have same instrument number as indicated 
+                    if instrument_no_infile != instrument_no: 
+                        print('     Warning, instrument number found in L1 file does not match with input value! Will record the true value found in L1 file into spe file. ')
+                        instrument_no = instrument_no_infile                
+                        
+                    height, width = df.shape
+                    if height == 0: # check if the L1 file is "empty"
+                        print('     an empty L1 file, escape from reformat ... ')
+                    else: 
+                        print('     prepare header of the spe file ... ')
+                        df_header = QDOAS_ASCII_formater_header(df) # prepare header part of the spe file
+                        print('     prepare spectrum of the spe file ... ')
+                        df_spec = df.iloc[:,63:2111] # prepare spectrum  part of the spe file, note here the spec is scaled value!
+                        print('     writting to QDOAS spe file ... ')
+                        QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, location, lat, lon, alt)
+                        del df_header, df_spec
+                    del df, location, lat, lon, alt 
+                    
+                    #no_ZS = check_ZS_modes(full_file_name, df)
+                    #total_ZS += no_ZS
                 
                 
 
