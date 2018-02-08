@@ -218,8 +218,8 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
         
         for i in range(len(df_header)):
             f.write('Date(DD/MM/YYY) = ' + str(df_header.Date[i]) + '\n')
-            #f.write('UTC Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
-            f.write('UTC Start Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
+            f.write('UTC Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
+            #f.write('UTC Start Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
 
             f.write('Viewing Elevation Angle (deg) = ' + str(df_header.VEA[i]) + '\n') 
             f.write('Viewing Azimuth Angle (deg) = ' + str(df_header.VAA[i]) + '\n')
