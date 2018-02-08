@@ -13,7 +13,7 @@ import datetime
 import dateutil.parser
 import numpy as np
 instrument_no = 108
-process_all_files = False # process all files in L1 folder, or just for a period
+process_all_files = True # process all files in L1 folder, or just for a period
 #start_date = datetime.datetime(2018,1,15) # use 'yyyy-mm-dd' format, this only used if process_all_files = False
 start_date = '2018-01-10'
 end_date = '2018-01-12' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
