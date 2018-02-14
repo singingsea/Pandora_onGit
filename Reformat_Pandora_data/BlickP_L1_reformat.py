@@ -12,11 +12,11 @@ from pysolar.solar import *
 import datetime
 import dateutil.parser
 import numpy as np
-instrument_no = 108
+instrument_no = 109
 process_all_files = True # process all files in L1 folder, or just for a period
 #start_date = datetime.datetime(2018,1,15) # use 'yyyy-mm-dd' format, this only used if process_all_files = False
-start_date = '2018-01-10'
-end_date = '2018-01-12' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
+#start_date = '2018-01-10'
+#end_date = '2018-01-12' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
 # the location, lat, lon, and alt information will be direactly read from L1 file
 
 L1_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\L1\\'
