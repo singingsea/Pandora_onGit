@@ -202,11 +202,12 @@ def QDOAS_ASCII_formater_header(df):
         #    df_output.fd[i] = float(pd.datetime.strftime(df_sp.LSC[i],'%j')) -1 + hh/24 + mm/24/60 + ss/24/60/60
             
         return df_output    
+
 #%%
 def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, location, lat, lon, alt):
     spefilename = spe_file_path + file_name[:-4] + '.spe'
     with open(spefilename, 'w') as f:
-        
+        # write the general header
         f.write('# Station = ' + location + '(lat ' + str(lat) + ' , lon ' + str(lon) + ')' + '\n')
         f.write('# Institute = Environment and Climate Change Canada' + '\n')
         f.write('# PI name = Vitali Fioletov (vitali.fioletov@canada.ca)' + '\n')
@@ -215,8 +216,9 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
         f.write('# Total number of records = ' + str(len(df_header)) + '\n')
         f.write('# Filter wheel 1 positions = ' + str(pd.unique(df_header.FW1)) + '\n')
         f.write('# Filter wheel 2 positions = ' + str(pd.unique(df_header.FW2)) + '\n')
-        
+        # loop over for all spectra
         for i in range(len(df_header)):
+            # write the header for each spectrum
             f.write('Date(DD/MM/YYY) = ' + str(df_header.Date[i]) + '\n')
             f.write('UTC Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
             #f.write('UTC Start Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
@@ -233,13 +235,15 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
             f.write('Latitude = ' + str(lat) + '\n')
             f.write('Longitude = ' + str(lon) + '\n')
             f.write('Altitude = ' + str(alt) + '\n')
-            
 
-            height, width = df_spec.shape
-            for j in range(width):
-                spec = df_spec.iloc[i,:]/df_header.Scale_factor[i]
-                f.write('\t' + str(spec[j]) + '\n')
-    
+            # calculate un-scaled spec
+            spec = df_spec.iloc[i,:]/df_header.Scale_factor[i]\
+            # make a dataframe to store spec
+            df_spec_4write = pd.DataFrame(columns = ['place_holder','spec'])
+            df_spec_4write['spec'] = spec
+            # write the spec dataframe into file
+            df_spec_4write.to_csv(f, mode = 'a', sep = '\t',index = False,header = False)
+
 #%%
 import os
 import shutil
