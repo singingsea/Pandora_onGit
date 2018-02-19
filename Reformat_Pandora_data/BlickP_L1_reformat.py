@@ -12,7 +12,8 @@ from pysolar.solar import *
 import datetime
 import dateutil.parser
 import numpy as np
-instrument_no = 109
+instrument_no = 103
+process_PanPS_lev2 = True
 process_all_files = True # process all files in L1 folder, or just for a period
 #start_date = datetime.datetime(2018,1,15) # use 'yyyy-mm-dd' format, this only used if process_all_files = False
 #start_date = '2018-01-10'
@@ -20,6 +21,7 @@ process_all_files = True # process all files in L1 folder, or just for a period
 # the location, lat, lon, and alt information will be direactly read from L1 file
 
 L1_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\L1\\'
+lev2_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\L2\\'
 spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe\\'
 
 
@@ -38,6 +40,15 @@ Measurement_Type_Index_dict = {
         9 : 'SPECIAL'
         }
 
+# Use this dict to interpret the two letter routine code to measurement type. This is only used for old PanPS lev2 data, for BlickP L1 data, we can directly use measurement type index dict 
+Measurement_Routine_Index_dict = {
+        'AO' : 'ALMUCANTAR',
+        'AU' : 'ALMUCANTAR',
+        'ZO' : 'ZENITH',
+        'ZU' : 'ZENITH',
+        'SO' : 'DIRECT SUN',
+        'SU' : 'DIRECT SUN'        
+        }
 #%%
 def read_BlickP_L1(file_nm):
     
@@ -84,6 +95,46 @@ def read_BlickP_L1(file_nm):
     df = pd.read_csv(file_nm, sep='\s+', header=None, names = column_names, skiprows= No_header_lines) # read in data use Pandas frame
    
     return df, instrument_no, location, lat, lon, alt
+#%%
+def read_PanPS_lev2(file_nm):
+    
+    f = open(file_nm,'r')
+    header_part_ind = 0 # use the '----' symble as header identification
+    No_header_lines = 0
+    column_names = []
+    read_column_names = False
+    while header_part_ind != 2: # the data part start after read in '----' twice
+        header = f.readline() # read in a line of the file
+        if header.find('Pandora #') != -1: # find instrument number    
+            instrument_no = float(header[len('Pandora #'):len('Pandora #')+3])
+        if header.find('at Envcanad(') != -1: # find 'Short location name'
+            location = header[len('at Envcanad('):header.find(')')]
+            lat = float(header[header.find('Lat ')+4:header.find(', Long')-1])
+            lon = float(header[header.find('Long ')+4:header.find('Long ')+4+7])  
+            alt = float(header[header.find('a.s.l.')-4:header.find('m a.s.l.')])
+            
+        No_header_lines += 1 # count how many lines belong to header
+        if header.find('----') != -1: # find '----' symble
+            header_part_ind += 1
+            if header_part_ind == 1:
+                read_column_names = True # the lines after first '----' is considered as column names
+            else:
+                read_column_names = False
+        if read_column_names == True:
+            column_names.append(header.strip()) # save column names           
+    del column_names[0]
+    del column_names[-1:-3]
+    for spec_data_column in list(range(54,4149)):
+        column_names.append('L1_' + str(spec_data_column)) 
+        
+  
+       
+    #print(No_header_lines)
+    f.close()           
+                          
+    df = pd.read_csv(file_nm, sep='\s+', header=None, names = column_names, skiprows= No_header_lines,index_col = False) # read in data use Pandas frame
+   
+    return df, instrument_no, location, lat, lon, alt
 
 #%%
 def check_ZS_modes(full_file_name, df):
@@ -94,28 +145,63 @@ def check_ZS_modes(full_file_name, df):
    return no_ZS
 
 #%% 
-def QDOAS_ASCII_formater_header(df):
-        df_sp = df[['Column 1: Two letter code of measurement routine',
-                'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)',
-                'Column 6: Total duration of measurement set in seconds',
-                'Column 7: Data processing type index',
-                'Column 8: Integration time [ms]',
-                'Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions',
-                'Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions',
-                'Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used',
-                'Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon',
-                'Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used',
-                'Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)',
-                'Column 61: Scale factor for data, to obtain unscaled output divide data by this number',
-                'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]'
-                ]]
-
-        df_sp['datetime'] = pd.to_datetime(df_sp['Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)'], utc = True)
+def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
+        if process_PanPS_lev2 == False:
+            column_nm_dict = {
+                    'Column 1: Two letter code of measurement routine':'measurement_routine',
+                    'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)':'ISO_time',
+                    'Column 6: Total duration of measurement set in seconds':'measurement_time',
+                    'Column 7: Data processing type index':'Data_processing_type',# this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
+                    'Column 8: Integration time [ms]':'Int_time',
+                    'Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions':'FW_1',
+                    'Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions':'FW_2',
+                    'Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used':'PZA',
+                    'Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon':'ZPM',
+                    'Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used':'PAA',
+                    'Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)':'APM',
+                    'Column 61: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',
+                    'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]':'data_type'
+                    }           
+#            df_sp = df[['Column 1: Two letter code of measurement routine',
+#                    'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)',
+#                    'Column 6: Total duration of measurement set in seconds',
+#                    'Column 7: Data processing type index',
+#                    'Column 8: Integration time [ms]',
+#                    'Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions',
+#                    'Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions',
+#                    'Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used',
+#                    'Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon',
+#                    'Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used',
+#                    'Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)',
+#                    'Column 61: Scale factor for data, to obtain unscaled output divide data by this number',
+#                    'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]'
+#                    ]]
+        else:
+            column_nm_dict = {
+                    'Column 1: Two letter code of measurement routine':'measurement_routine',
+                    'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)':'ISO_time',
+                    'Column 5: Total duration of measurement set in seconds':'measurement_time',
+                    #'Column 7: Data processing type index':'Data_processing_type',# this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
+                    'Column 6: Integration time [ms]':'Int_time',
+                    'Column 9: Position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions':'FW_1',
+                    'Column 10: Position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions':'FW_2',
+                    'Column 11: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used':'PZA',
+                    'Column 12: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon':'ZPM',
+                    'Column 13: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used':'PAA',
+                    'Column 14: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)':'APM',
+                    'Column 51: Scale factor for output data, to obtain unscaled output devide data by this number':'scale_factor',
+                    'Column 53: Level 2 data type, data are... 1=corrected count rate [s-1], 2=irradiance [mW/m2/nm], 3=radiance [mW/m2/nm/sr]':'data_type'
+                    }    
+        df_sp = pd.DataFrame()
+        for key in column_nm_dict.keys():
+            df_sp[column_nm_dict[key]] = df[key]
+            
+        df_sp['datetime'] = pd.to_datetime(df_sp['ISO_time'], utc = True)
         
 
         # add timestamp
         print('     Convert ISO 8601 time to Python-dateutil datetime')
-        df_sp['time'] = list(map(dateutil.parser.parse, df_sp['Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)']))
+        df_sp['time'] = list(map(dateutil.parser.parse, df_sp['ISO_time']))
         # add UTC and LTC
         print('     Add UTC column to dataframe')              
         df_sp['UTC'] = df_sp.time.dt.tz_convert('UTC')
@@ -146,51 +232,61 @@ def QDOAS_ASCII_formater_header(df):
         df_output['UTC'] = df_sp.UTC
         df_output['Date'] = df_output.UTC.dt.strftime('%d/%m/%Y')
         df_output['time'] = df_output.UTC.dt.strftime('%H:%M:%S')
-        df_output['Exposure'] = df_sp['Column 8: Integration time [ms]']/1000 # QDOAS need exposure time in sec
-        df_output['Total_Measurement_Time'] = df_sp['Column 6: Total duration of measurement set in seconds']
+        df_output['Exposure'] = df_sp['Int_time']/1000 # QDOAS need exposure time in sec
+        df_output['Total_Measurement_Time'] = df_sp['measurement_time']
         df_output['SZA'] = df_sp.SZA # solar zenith angle [deg]
         df_output['SAA'] = df_sp.SAA # solar azimuth angle [deg]
         df_output['VAA'] = '' # viewing azimuth angle angle [deg]
         df_output['VEA'] = ''# viewing elevation angle angle [deg]
         df_output['fd'] = ''
-        df_output['Scale_factor'] = df_sp['Column 61: Scale factor for data, to obtain unscaled output divide data by this number']
-        df_output['FW1'] = df_sp['Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions']
-        df_output['FW2'] = df_sp['Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions']
+        df_output['Scale_factor'] = df_sp['scale_factor']
+        df_output['FW1'] = df_sp['FW_1']
+        df_output['FW2'] = df_sp['FW_2']
         
-                
-        # make measurement type column
-        df_output['Measurement_Type_Index'] = df_sp['Column 7: Data processing type index'] # this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
-        df_output['Measurement_Type'] = ''
-        for i in range(len(df_sp)):
-            col_num = df_output.columns.get_loc('Measurement_Type')
-            try:
-                df_output.iat[i,col_num] = Measurement_Type_Index_dict[df_output.Measurement_Type_Index[i]]
-            except:
-                print(str(df_output.Measurement_Type_Index[i]))
-                     
+        if process_PanPS_lev2 == False:        
+            # make measurement type column
+            df_output['Measurement_Type_Index'] = df_sp['Data_processing_type'] # this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
+            df_output['Measurement_Type'] = ''
+            for i in range(len(df_sp)):
+                col_num = df_output.columns.get_loc('Measurement_Type')
+                try:
+                    df_output.iat[i,col_num] = Measurement_Type_Index_dict[df_output.Measurement_Type_Index[i]]
+                except:
+                    print(str(df_output.Measurement_Type_Index[i]))
+        else:
+            df_output['Measurement_Type_Index'] = df_sp['measurement_routine']
+            df_output['Measurement_Type'] = ''
+            for i in range(len(df_sp)):
+                col_num = df_output.columns.get_loc('Measurement_Type')
+                try:
+                    df_output.iat[i,col_num] = Measurement_Routine_Index_dict[df_output.Measurement_Type_Index[i]]
+                except:
+                    print(str(df_output.Measurement_Type_Index[i])) 
+                    
+                    
         # make elevation viewing angle column
         col_nm_VEA = df_output.columns.get_loc('VEA')
         col_nm_VAA = df_output.columns.get_loc('VAA')
-        col_nm_PZA = df_sp.columns.get_loc('Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used')
-        col_nm_PAA = df_sp.columns.get_loc('Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used')
+        col_nm_PZA = df_sp.columns.get_loc('PZA')
+        col_nm_PAA = df_sp.columns.get_loc('PAA')
         col_nm_SZA = df_sp.columns.get_loc('SZA')
         col_nm_SAA = df_sp.columns.get_loc('SAA')
         for i in range(len(df_sp)):
-            if df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 0:               
+            if df_sp['ZPM'][i] == 0:               
                 df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_PZA]
-            elif df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 1:
+            elif df_sp['ZPM'][i] == 1:
                 df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_SZA] - df_sp.iat[i,col_nm_PZA]
-            elif df_sp['Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon'][i] == 2:
+            elif df_sp['ZPM'][i] == 2:
                 print('Warning: we do not calcualte moon location!')  
                 df_output.iat[i,col_nm_VEA] = 'NaN'
                 
         # make azimuth viewing angle column        
         for i in range(len(df_sp)):            
-            if df_sp['Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)'][i] == 0:
+            if df_sp['APM'][i] == 0:
                 df_output.iat[i,col_nm_VAA] = df_sp.iat[i,col_nm_PAA]
-            elif df_sp['Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)'][i] == 1:
+            elif df_sp['APM'][i] == 1:
                 df_output.iat[i,col_nm_VAA] = df_sp.iat[i,col_nm_SAA] - df_sp.iat[i,col_nm_PAA]
-            elif df_sp['Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)'][i] == 2:
+            elif df_sp['APM'][i] == 2:
                 print('Warning: we do not calcualte moon location!')  
                 df_output.iat[i,col_nm_VAA] = 'NaN'     
         
@@ -248,14 +344,21 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
 import os
 import shutil
 total_ZS = 0
-src_files = os.listdir(str(L1_file_path))
+if process_PanPS_lev2 == False:
+    src_file_path = L1_file_path       
+else:
+    src_file_path = lev2_file_path
+src_files = os.listdir(str(src_file_path))
 
 if process_all_files == False:
     start_date = pd.to_datetime(start_date,utc=True)
     end_date = pd.to_datetime(end_date,utc=True)
     
-for idx, file_name in enumerate(src_files):
-    date_on_filename = file_name[file_name.find('_L1')-8:file_name.find('_L1')]
+for idx, file_name in enumerate(src_files):  
+    if process_PanPS_lev2 == False:
+        date_on_filename = file_name[file_name.find('_L1')-8:file_name.find('_L1')]
+    else:
+        date_on_filename = file_name[file_name.find('_lev2')-8:file_name.find('_lev2')]
     date_on_filename = pd.to_datetime(date_on_filename,utc=True)
     
     # check if we want process all files in the L1 data folder, or just for a period
@@ -266,9 +369,9 @@ for idx, file_name in enumerate(src_files):
         if (date_on_filename >= start_date) & (date_on_filename <= end_date):
            process_this_L1_file = True     
     
-    full_file_name = os.path.join(L1_file_path, file_name) # creat full file name (including path)
+    full_file_name = os.path.join(src_file_path, file_name) # creat full file name (including path)
     if (os.path.isfile(full_file_name)): # only get files
-        if (full_file_name.find('Pandora' + str(instrument_no)) != -1) & (full_file_name.find('L1') != -1): # only get files that have name "PandoraXXX" and "L1"
+        if (full_file_name.find('Pandora' + str(instrument_no)) != -1): # only get files that have name "PandoraXXX" and "L1"
             if not os.path.getsize(full_file_name) == 0: # only copy non-zero size L0 file
                 if process_this_L1_file == True:
                     if process_all_files == True:
@@ -276,7 +379,10 @@ for idx, file_name in enumerate(src_files):
                     else:
                         print(' >>> Formating ' + file_name )
                     print('     read BlickP L1 file ... ')
-                    df, instrument_no_infile, location, lat, lon, alt = read_BlickP_L1(full_file_name) # read L1 file
+                    if process_PanPS_lev2 == False:
+                        df, instrument_no_infile, location, lat, lon, alt = read_BlickP_L1(full_file_name) # read L1 file
+                    else:
+                        df, instrument_no_infile, location, lat, lon, alt = read_PanPS_lev2(full_file_name) # read L1 file
 
                     # check if we have same instrument number as indicated 
                     if instrument_no_infile != instrument_no: 
@@ -288,7 +394,7 @@ for idx, file_name in enumerate(src_files):
                         print('     an empty L1 file, escape from reformat ... ')
                     else: 
                         print('     prepare header of the spe file ... ')
-                        df_header = QDOAS_ASCII_formater_header(df) # prepare header part of the spe file
+                        df_header = QDOAS_ASCII_formater_header(df,process_PanPS_lev2) # prepare header part of the spe file
                         print('     prepare spectrum of the spe file ... ')
                         df_spec = df.iloc[:,63:2111] # prepare spectrum  part of the spe file, note here the spec is scaled value!
                         print('     writting to QDOAS spe file ... ')
