@@ -26,8 +26,8 @@ lev2_file_path = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\zipfiles
 spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe_lev2_from_Vitali\\'
 
 
-sites_list_LTC = {'Downsview': 'America/Toronto', 'FortMcKay': 'America/Edmonton', 'StGeorge':'America/Toronto'}
-sites_list_LSC = {'Downsview': 'EST', 'FortMcKay': 'MST', 'StGeorge':'EST'}
+sites_list_LTC = {'Downsview': 'America/Toronto', 'FortMcKay': 'America/Edmonton', 'StGeorge':'America/Toronto', 'Toronto':'America/Toronto'}
+sites_list_LSC = {'Downsview': 'EST', 'FortMcKay': 'MST', 'StGeorge':'EST', 'Toronto' : 'EST'}
 Measurement_Type_Index_dict = {
         0 : 'ONLYL1',
         1 : 'NOL1',
@@ -212,7 +212,7 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
             print('     Add LSC column to dataframe')              
             df_sp['LSC'] = df_sp.time.dt.tz_convert(sites_list_LSC[location])
         else:
-            print('     Warning: the location of the measurements was non included in sites list!')   
+            print('     Warning: the location of the measurements was not included in sites list!')   
             print('     ' + location)   
         # calcuate SZA
         print('     Add SZA and SAA column to dataframe')  
