@@ -21,8 +21,9 @@ process_all_files = True # process all files in L1 folder, or just for a period
 # the location, lat, lon, and alt information will be direactly read from L1 file
 
 L1_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\L1\\'
-lev2_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\L2\\'
-spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe\\'
+#lev2_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\L2\\'
+lev2_file_path = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\zipfiles\\Pan_level2data\\'
+spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe_lev2_from_Vitali\\'
 
 
 sites_list_LTC = {'Downsview': 'America/Toronto', 'FortMcKay': 'America/Edmonton', 'StGeorge':'America/Toronto'}
