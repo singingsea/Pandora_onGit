@@ -14,16 +14,16 @@ import dateutil.parser
 import numpy as np
 instrument_no = 103
 process_PanPS_lev2 = True
-process_all_files = True # process all files in L1 folder, or just for a period
+process_all_files = False # process all files in L1 folder, or just for a period
 #start_date = datetime.datetime(2018,1,15) # use 'yyyy-mm-dd' format, this only used if process_all_files = False
-#start_date = '2015-02-05'
-#end_date = '2015-02-07' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
+start_date = '2013-01-01'
+end_date = '2015-02-01' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
 # the location, lat, lon, and alt information will be direactly read from L1 file
 
 L1_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\L1\\'
 #lev2_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\L2\\'
 lev2_file_path = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\zipfiles\\Pan_level2data\\'
-spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe_lev2_from_Vitali\\'
+spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe_lev2_from_Vitali_2013_2014\\'
 
 
 sites_list_LTC = {'Downsview': 'America/Toronto', 'FortMcKay': 'America/Edmonton', 'StGeorge':'America/Toronto', 'Toronto':'America/Toronto'}
@@ -182,6 +182,7 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
                     'Column 1: Two letter code of measurement routine':'measurement_routine',
                     'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)':'ISO_time',
                     'Column 5: Total duration of measurement set in seconds':'measurement_time',
+                    'Column 5: Total duration of measurement set in seconds (=#, if the line is a comment line)':'measurement_time', # this is for old version of PanPS lev2 data, such as 2013-2014
                     #'Column 7: Data processing type index':'Data_processing_type',# this is Pandora L1 data type, 2 = direct-sun, 3 = direct-moon, 4 = zenith-sky, 6 = profile, 7 = almucantar
                     'Column 6: Integration time [ms]':'Int_time',
                     'Column 9: Position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions':'FW_1',
@@ -191,11 +192,15 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
                     'Column 13: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used':'PAA',
                     'Column 14: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)':'APM',
                     'Column 51: Scale factor for output data, to obtain unscaled output devide data by this number':'scale_factor',
+                    'Column 51: Scale factor for output data (to obtain unscaled output devide data by this number)' : 'scale_factor',# this is for old version of PanPS lev2 data, such as 2013-2014
                     'Column 53: Level 2 data type, data are... 1=corrected count rate [s-1], 2=irradiance [mW/m2/nm], 3=radiance [mW/m2/nm/sr]':'data_type'
                     }    
         df_sp = pd.DataFrame()
         for key in column_nm_dict.keys():
-            df_sp[column_nm_dict[key]] = df[key]
+            try:
+                df_sp[column_nm_dict[key]] = df[key]
+            except:
+                pass
             
         df_sp['datetime'] = pd.to_datetime(df_sp['ISO_time'], utc = True)
         
