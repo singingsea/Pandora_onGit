@@ -18,5 +18,6 @@ def open_shelf(shelve_filename):
 #shelve_filename = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\Blick\\L2\\SO2_correction_monthly_FortMcKay\\BlickP_monthly_calibrated_SO2_Pandora123.out'
 #shelve_filename = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\Blick\\L2\\SO2_correction_30days_FortMcKay\\BlickP_monthly_calibrated_SO2_Pandora123.out'
 #shelve_filename = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\old\\L2\\Blick_L2.out'
-shelve_filename = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\Blick\\L2\\Blick_L2.out'
+#shelve_filename = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\Blick\\L2\\Blick_L2.out'
+shelve_filename = 'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2_plots\\lev3.out'
 open_shelf(shelve_filename)

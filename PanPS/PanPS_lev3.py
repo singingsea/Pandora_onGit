@@ -193,10 +193,12 @@ def plot_PanPS_lev3(df,gas_type):
 #%%
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\L3\\' # Pandora108 data on Brewer server
 #plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\L3_plots\\' # Pandora108 data on Brewer server
-filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\L3\\' # Pandora108 data on Brewer server
-plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\L3_plots\\' # Pandora108 data on Brewer server
+#filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\L3\\' # Pandora108 data on Brewer server
+#plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\L3_plots\\' # Pandora108 data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\L3\\' # Pandora108 data on Brewer server
 #plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\L3_plots\\' # Pandora108 data on Brewer server
+filepath =  'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2\\' # Pandora108 data on Brewer server
+plotpath = 'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2_plots\\' # Pandora108 data on Brewer server
 shelve_filename = plotpath + 'lev3' + '.out'
 
 # read in all PanPS level 3 data (daily files) and then concat them to a single dataframe
