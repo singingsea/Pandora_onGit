@@ -59,6 +59,8 @@ def read_BlickP_lev3(file_nm):
         df['location'] = 'FortMcKay'
     elif file_nm.find('StGeorge') != -1:
         df['location'] = 'StGeorge'
+    elif file_nm.find('Envcanad') != -1:
+        df['location'] = 'Downsview'
     else:
         df['location'] = 'UnKnown'
         
@@ -97,6 +99,41 @@ def concat_lev3():
 
 
     return df
+#%%
+def add_datetime(df):
+    
+    # add timestamp
+    print('Convert ISO 8601 time to Python-dateutil datetime')
+    df['time'] = list(map(dateutil.parser.parse, df['Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)']))
+    # add UTC and LTC
+    print('Add UTC column to dataframe')              
+    df['UTC'] = df.time.dt.tz_convert('UTC')
+    
+    # group data by measurement locations
+    groups = df.groupby(['location'],as_index=False)
+    first_location = True
+    # for each location we will assign a local time
+    for location_name, group in groups:
+        # check if the location name (found from lev3 data file name) is recogonized in our site list
+        if location_name in sites_list.keys():
+            print('Add LTC column to dataframe [location = ' + location_name +']') 
+            # add local time to a group
+            #group['LTC'] = group.time.dt.tz_convert(sites_list[location_name])  
+            group.loc[:,'LTC'] = group.time.dt.tz_convert(sites_list[location_name])  
+            # combine the results of each group back to dataframe    
+            if first_location == True:
+                df_output = group
+                first_location = False
+            else:
+                df_output = pd.concat([df_output,group])
+        else:
+            print('\n')
+            print('-------- Warnning: -----------')
+            print('Do not know timezone for the new measurement location (not in measurement location lists) : "' + location + '"')
+            print('No local time (LTC) column created for this site.')
+            print('------------------- \n')  
+    
+    return df_output
 
 #%%
 def plot_PanPS_lev3(df,gas_type):
@@ -191,14 +228,22 @@ def plot_PanPS_lev3(df,gas_type):
 
 
 #%%
+    
+import sys
+sys.path.insert(0, 'E:\\Pandora_onGit\\BlikP')
+sys.path.insert(0, 'C:\\Users\\ZhaoX\\Documents\\GitHub\\Pandora_onGit\\BlikP')
+from sites_list import sites_list    
+
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\L3\\' # Pandora108 data on Brewer server
 #plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\L3_plots\\' # Pandora108 data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\L3\\' # Pandora108 data on Brewer server
 #plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\L3_plots\\' # Pandora108 data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\L3\\' # Pandora108 data on Brewer server
 #plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\L3_plots\\' # Pandora108 data on Brewer server
-filepath =  'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2\\' # Pandora108 data on Brewer server
-plotpath = 'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2_plots\\' # Pandora108 data on Brewer server
+#filepath =  'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2\\' 
+#plotpath = 'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2_plots\\'
+filepath =  'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103\\' 
+plotpath = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\'
 shelve_filename = plotpath + 'lev3' + '.out'
 
 # read in all PanPS level 3 data (daily files) and then concat them to a single dataframe
@@ -208,6 +253,8 @@ df_lev3['O3_VCD'] = df_lev3['Column 27: Ozone slant column amount [Dobson Units]
 df_lev3['NO2_VCD'] = df_lev3['Column 30: Nitrogen dioxide slant column amount [Dobson Units], -9e99=not fitted or fitting not successfull']/df_lev3['Column 32: Geometrical nitrogen dioxide air mass factor']
 df_lev3['SO2_VCD'] = df_lev3['Column 33: Sulfur dioxide slant column amount [Dobson Units], -9e99=not fitted or fitting not successfull']/df_lev3['Column 35: Geometrical sulfur dioxide air mass factor']
 df_lev3['HCHO_VCD'] = df_lev3['Column 36: Formaldehyde slant column amount [Dobson Units], -9e99=not fitted or fitting not successfull']/df_lev3['Column 38: Geometrical formaldehyde air mass factor']
+# add datetime
+df_lev3 = add_datetime(df_lev3)
 # plot VCD time serise
 plot_PanPS_lev3(df_lev3,'SO2')
 plot_PanPS_lev3(df_lev3,'O3')
