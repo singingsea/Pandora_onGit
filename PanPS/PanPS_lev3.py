@@ -107,7 +107,8 @@ def add_datetime(df):
     df['time'] = list(map(dateutil.parser.parse, df['Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)']))
     # add UTC and LTC
     print('Add UTC column to dataframe')              
-    df['UTC'] = df.time.dt.tz_convert('UTC')
+    #df['UTC'] = df.time.dt.tz_convert('UTC')
+    df['UTC'] = df['time']
     
     # group data by measurement locations
     groups = df.groupby(['location'],as_index=False)
