@@ -33,8 +33,12 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
     for location in locations:
         days = pd.date_range(start = new_df.timestamp.min(), end = new_df.timestamp.max(),freq = 'D', normalize = True)
         delta_time = pd.Timedelta(hours = 24)
-        delta_time_xlim1 = pd.Timedelta(hours = 3) # only plot sunlight period, from 6 a.m. to 18 a.m. (local time)
-        delta_time_xlim2 = pd.Timedelta(hours = 21)
+        if gas_type != 'NO2_moon':
+            delta_time_xlim1 = pd.Timedelta(hours = 3) # only plot sunlight period, from 3 a.m. to 21 a.m. (local time)
+            delta_time_xlim2 = pd.Timedelta(hours = 21)
+        else:
+            delta_time_xlim1 = pd.Timedelta(hours = 0) # for direct-moon measurement,  plot whole day
+            delta_time_xlim2 = pd.Timedelta(hours = 24)
         
         
         for day in days:
@@ -100,6 +104,12 @@ def daily_plots_LTC(new_df, gas_type, instrument_name, plot_path,VCD_column_nm):
                     ax.text(day + pd.Timedelta(hours = 7),3.5, 'End time: ' + str(x_time[-1]))
                     #ax.text(day + pd.Timedelta(hours = 7),3.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
                     ax.text(day + pd.Timedelta(hours = 7),3.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
+                elif gas_type == 'NO2_moon':
+                    ax.set_ylim(-1,3)
+                    ax.text(day + pd.Timedelta(hours = 7),2.7, 'Srart time: ' + str(x_time[0]))
+                    ax.text(day + pd.Timedelta(hours = 7),2.5, 'End time: ' + str(x_time[-1]))
+                    #ax.text(day + pd.Timedelta(hours = 7),2.3, 'Corrected mean = ' + str(format(y1.mean(),'.2f')) + ' DU')
+                    ax.text(day + pd.Timedelta(hours = 7),2.1, 'BlickP mean = ' + str(format(y2.mean(),'.2f'))+ ' DU')
                 ax.set_xlabel('LTC')
                 ax.set_ylabel(gas_type + ' VCD [DU]')
                 measurement_location = new_df.location[ind_start:ind_end]
@@ -231,6 +241,9 @@ def main(input_df):
     elif gas_type == 'HCHO':
         df_Blick = df_Blick[df_Blick[VCD_err_column_nm] <= 0.35]
         df_Blick['VCD_err_rounded'] = df_Blick[VCD_err_column_nm].round(1)
+    elif gas_type == 'NO2_moon':
+        df_Blick = df_Blick[df_Blick[VCD_err_column_nm] <= 2]
+        df_Blick['VCD_err_rounded'] = df_Blick[VCD_err_column_nm].round()
     #%% ************* 5. plot daily timeserise *********************  
 
     if len(df_Blick) > 0:
