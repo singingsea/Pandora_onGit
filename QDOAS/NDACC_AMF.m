@@ -7,7 +7,11 @@ amf_dir = [code_path '/no2_amf_lut_v1_0/'];
 
 
 % print the ozone data to the sza input file
-input_DAY_SZA_table = table(data.Year,data.Fractionalday,data.SZA);
+try
+    input_DAY_SZA_table = table(data.Year,data.Fractionalday,data.SZA);
+catch
+        input_DAY_SZA_table = table(data.Year_x,data.Fractionalday,data.SZA);
+end
 writetable(input_DAY_SZA_table,[amf_dir 'DAY_SZA.dat'],'Delimiter','\t','WriteVariableNames',false);
 
 % now print up to input no2 file
