@@ -53,13 +53,25 @@ def read_BlickP_L2(file_nm):
 #%%
 def plot_BlickP_L2(df,file_nm):
     # L2 data quality flag for fitted gas : 0=high quality, 1=medium quality, 2=low quality 
-    L2_QF = 2
+    L2_QF = 1
     
+    column_names = df.columns.values.tolist() # get all column names of the data frame
+       
     if file_nm.find('rout0') != -1: #identify L2 data by its name
         # the next lines give the column names in L2 data, if L2 data header changed (eg upgrade in BlickP), then you need modify the following lines
-        L2_QF_column_nm = 'Column 11: L2 data quality flag for ozone: 0=high quality, 1=medium quality, 2=low quality'
-        y_column_nm = 'Column 8: Ozone total vertical column amount [Dobson Units], -9e99=retrieval not successful'
-        y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'        
+        #L2_QF_column_nm = 'Column 11: L2 data quality flag for ozone: 0=high quality, 1=medium quality, 2=low quality'
+        #y_column_nm = 'Column 8: Ozone total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        #y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'               
+        for column_name in column_names: # searching for column names
+            if column_name.find('L2 data quality flag for ozone') !=-1: # if find "L2 data quality flag for ozone", will use that column name
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                L2_QF_column_nm = column_name
+            elif column_name.find('Ozone total vertical column amount') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_column_nm = column_name
+            elif column_name.find('Normalized rms of spectral fitting residuals weighted with measured uncertainty') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_rms_column_nm = column_name    
         ylabel_1 = 'Ozone'
     elif file_nm.find('rnvs0') != -1:
         L2_QF_column_nm = 'Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'
@@ -159,10 +171,11 @@ def plot_BlickP_L2(df,file_nm):
 
 #%%
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\L2_test\\' # Pandora108 SO2, HCHO data on Brewer server
-filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
+#filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\Blick\\L2\\' # Pandora109 Ozone, NO2, SO2, and HCHO data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\Blick\\L2\\' # Pandora123 Ozone, NO2, SO2, and HCHO data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\122\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
+filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\103\\Blick\\L2\\' # Pandora103 Ozone, NO2 data on Brewer server
 plotpath = filepath
 shelve_filename = filepath + 'Blick_L2' + '.out' 
 
