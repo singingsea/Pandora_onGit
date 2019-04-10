@@ -21,7 +21,8 @@ def load_files(mypath):
     onlytxtfiles = []
     for f in onlyfiles:
         if f.find('.txt') != -1:
-            onlytxtfiles.append(f)
+            if f.find('.swp') == -1:# sometimes there are some hiden txt.swp files! don't read them!
+                onlytxtfiles.append(f)
     return onlytxtfiles
 
 #%%
@@ -53,7 +54,7 @@ def read_BlickP_L2(file_nm):
 #%%
 def plot_BlickP_L2(df,file_nm):
     # L2 data quality flag for fitted gas : 0=high quality, 1=medium quality, 2=low quality 
-    L2_QF = 1
+    L2_QF = 12
     
     column_names = df.columns.values.tolist() # get all column names of the data frame
        
@@ -74,31 +75,81 @@ def plot_BlickP_L2(df,file_nm):
                 y_rms_column_nm = column_name    
         ylabel_1 = 'Ozone'
     elif file_nm.find('rnvs0') != -1:
-        L2_QF_column_nm = 'Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'
-        y_column_nm = 'Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
-        y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        #L2_QF_column_nm = 'Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        #y_column_nm = 'Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        #y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        for column_name in column_names: # searching for column names
+            if column_name.find('L2 data quality flag for nitrogen dioxide') !=-1: # if find "L2 data quality flag for nitrogen dioxide", will use that column name
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                L2_QF_column_nm = column_name
+            elif column_name.find('Nitrogen dioxide total vertical column amount') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_column_nm = column_name
+            elif column_name.find('Normalized rms of spectral fitting residuals weighted with measured uncertainty') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_rms_column_nm = column_name          
         ylabel_1 = 'NO2'
     elif file_nm.find('rfus0') != -1:
-        L2_QF_column_nm = 'Column 11: L2 data quality flag for formaldehyde: 0=high quality, 1=medium quality, 2=low quality'
-        y_column_nm = 'Column 8: Formaldehyde total vertical column amount [Dobson Units], -9e99=retrieval not successful'
-        y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        #L2_QF_column_nm = 'Column 11: L2 data quality flag for formaldehyde: 0=high quality, 1=medium quality, 2=low quality'
+        #y_column_nm = 'Column 8: Formaldehyde total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        #y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        for column_name in column_names: # searching for column names
+            if column_name.find('L2 data quality flag for formaldehyde') !=-1: # if find "L2 data quality flag for nitrogen dioxide", will use that column name
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                L2_QF_column_nm = column_name
+            elif column_name.find('Formaldehyde total vertical column amount') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_column_nm = column_name
+            elif column_name.find('Normalized rms of spectral fitting residuals weighted with measured uncertainty') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_rms_column_nm = column_name              
         ylabel_1 = 'HCHO'
     elif file_nm.find('rsut1') != -1:
-        L2_QF_column_nm = 'Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'
-        y_column_nm = 'Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
-        y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
-        y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
+        #L2_QF_column_nm = 'Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        #y_column_nm = 'Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        #y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        #y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
+        for column_name in column_names: # searching for column names
+            if column_name.find('L2 data quality flag for sulfur dioxide') !=-1: # if find "L2 data quality flag for nitrogen dioxide", will use that column name
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                L2_QF_column_nm = column_name
+            elif column_name.find('Sulfur dioxide total vertical column amount') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_column_nm = column_name
+            elif column_name.find('Normalized rms of spectral fitting residuals weighted with measured uncertainty') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_rms_column_nm = column_name           
         ylabel_1 = 'SO2'
     elif file_nm.find('rsut2') != -1:
-        L2_QF_column_nm = 'Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'
-        y_column_nm = 'Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
-        y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
-        y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
+        #L2_QF_column_nm = 'Column 17: L2 data quality flag for sulfur dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        #y_column_nm = 'Column 14: Sulfur dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        #y_rms_column_nm = 'Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        #y_rms = df['Column 21: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given']
+        for column_name in column_names: # searching for column names
+            if column_name.find('L2 data quality flag for sulfur dioxide') !=-1: # if find "L2 data quality flag for nitrogen dioxide", will use that column name
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                L2_QF_column_nm = column_name
+            elif column_name.find('Sulfur dioxide total vertical column amount') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_column_nm = column_name
+            elif column_name.find('Normalized rms of spectral fitting residuals weighted with measured uncertainty') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_rms_column_nm = column_name           
         ylabel_1 = 'SO2'
     elif file_nm.find('rnvsa') != -1:
-        L2_QF_column_nm = 'Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'
-        y_column_nm = 'Column 8: Nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
-        y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        #L2_QF_column_nm = 'Column 11: L2 data quality flag for nitrogen dioxide: 0=high quality, 1=medium quality, 2=low quality'
+        #y_column_nm = 'Column 8: nitrogen dioxide total vertical column amount [Dobson Units], -9e99=retrieval not successful'
+        #y_rms_column_nm = 'Column 15: Normalized rms of spectral fitting residuals weighted with measured uncertainty, -9=fitting not successful or no uncertainty given'
+        for column_name in column_names: # searching for column names
+            if column_name.find('L2 data quality flag for nitrogen dioxide') !=-1: # if find "L2 data quality flag for nitrogen dioxide", will use that column name
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                L2_QF_column_nm = column_name
+            elif column_name.find('Nitrogen dioxide total vertical column amount') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_column_nm = column_name
+            elif column_name.find('Normalized rms of spectral fitting residuals weighted with measured uncertainty') !=-1:
+                print('Find L2_QF_column_nm in the dataframe : ' + column_name)
+                y_rms_column_nm = column_name           
         ylabel_1 = 'NO2_moon'
 
     df = df[:][df[L2_QF_column_nm] <= L2_QF]
@@ -171,11 +222,13 @@ def plot_BlickP_L2(df,file_nm):
 
 #%%
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\L2_test\\' # Pandora108 SO2, HCHO data on Brewer server
-#filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\108\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
+#filepath =  '\\\\WONTLABJ105896\\G\\Pandora\\108\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\109\\Blick\\L2\\' # Pandora109 Ozone, NO2, SO2, and HCHO data on Brewer server
 #filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\Blick\\L2\\' # Pandora123 Ozone, NO2, SO2, and HCHO data on Brewer server
-#filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\122\\Blick\\L2\\' # Pandora108 Ozone, NO2 data on Brewer server
-filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\103\\Blick\\L2\\' # Pandora103 Ozone, NO2 data on Brewer server
+#filepath =  '\\\\wdow05dtmibroh\\GDrive\\Pandora\\122\\Blick\\L2\\' # Pandora122 Ozone, NO2 data on Brewer server
+#filepath =  '\\\\WONTLABJ105896\\G\\Pandora\\103\\Blick\\L2\\' # Pandora103 Ozone, NO2 data on Brewer server
+#filepath =  '\\\\WONTLABJ105896\\G\\Pandora\\104\\Blick\\L2\\' # Pandora104 Ozone, NO2 data on Brewer server
+filepath =  '\\\\WONTLABJ105896\\G\\Pandora\\145\\Blick\\L2\\' # Pandora145 Ozone, NO2 data on Brewer server
 plotpath = filepath
 shelve_filename = filepath + 'Blick_L2' + '.out' 
 
@@ -261,7 +314,8 @@ for file_nm in onlytxtfiles:
             if file_nm.find(retrieval_rcode) != -1:
                 #exec(file_nm[0:-6] + '= df')
                 print('Plotting data (retrieved by rcode: ' + retrieval_rcode +') ... ')
-                plot_BlickP_L2(df,filepath + file_nm)
+                plot_BlickP_L2(df,filepath + file_nm[:-4] + '.png')
+                df.to_csv(filepath + file_nm[:-4]+ '.csv',index=False);
                 rcode_found = True
         if rcode_found == False:
             print('\n')
