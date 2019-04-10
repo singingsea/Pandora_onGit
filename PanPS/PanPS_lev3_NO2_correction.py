@@ -259,12 +259,19 @@ import sys
 
 sys.path.insert(0, 'C:\\Users\\ZhaoX\\Documents\\GitHub\\Pandora_onGit\\BlikP')
 from sites_list import sites_list
-
-plot_path = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correction2\\'
+instrument_nm = 'Pandora 104'
+#instrument_nm = 'Pandora 103'
+#plot_path = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correction3\\'
+#plot_path = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_correction\\Downsview\\'
+plot_path = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_correction\\FortMcKay\\'
 # load Pandora PanPS processed lev3 data    
-shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\lev3.out'
+#shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\lev3.out'
+#shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_plots\\Downsview\\lev3.out'
+shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_plots\\FortMcKay\\lev3.out'
 open_shelf(shelve_filename)
-output_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correction2\\lev3_corrected.out'
+#output_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correction3\\lev3_corrected.out'
+#output_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_correction\\Downsview\\lev3_corrected.out'
+output_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_correction\\FortMcKay\\lev3_corrected.out'
 
 # use "get_single_fitting_result" to select a fitting window
 #df_O3 = get_single_fitting_result(df_lev3,'SU',310.0,330.0,4,0,1,18) # O3, window 5, default ozone
@@ -272,7 +279,7 @@ output_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correcti
 df_NO2_modified_1 = get_single_fitting_result(df_lev3,'SO',400.0,500.0,4,-1,-1,2) # NO2, window 2, modified no2, recommended by Vitali
 #df_NO2_modified_2 = get_single_fitting_result(df_lev3,'SO',400.0,500.0,4,-1,-1,17)
 #df_SO2 = get_single_fitting_result(df_lev3,'SU',306.0,330.0,4,0,1,2) # SO2, window 9, Fioletov et al. AMT, 2016
-
+df_NO2_modified_1.sort_values(by=['UTC'], inplace=True) # need sort the data by time
 df = df_NO2_modified_1.copy()
 
 # filters
@@ -287,20 +294,24 @@ beta = quantile_regression(x, y, 'NO2', 'dSCDs',plot_path)# plot SCD vs AMF quai
 #monthly_factors = {'year': month_label.year, 'month': month_label.month, 'intercept': beta[0], 'slop': beta[1]}
 #monthly_factors = {'year': month_label.year, 'month': month_label.month, 'day': 1, 'intercept': beta[0], 'slop': beta[1], 'No_points': len(x), 'No_days': No_days}
 #calibration_factors = calibration_factors.append(monthly_factors, ignore_index = True) # save monthly calibration factors
-df.loc[:,'VCD_corrected'] = (y - beta[0])/x - beta[1] # apply correction factors
+#df.loc[:,'VCD_corrected'] = (y - beta[0])/x - beta[1] # apply correction factors; this is Vitali's method in his 2016 Pandora SO2 AMT paper
+df.loc[:,'VCD_corrected'] = (y - beta[0])/x # apply correction factors; this is Herman's method in Pandora NO2 JGR paper.This makes more sense! 
 y = df['VCD_corrected']
+print('Ref SCD = ' + str(beta[0]))
 quantile_regression(x, y,'NO2', 'VCDs',plot_path) # plot VCD vs AMF quaintile plots
-df['instrument'] = 'Pandora 103'
+#df['instrument'] = 'Pandora 103'
 #daily_plots_LTC(df, 'NO2', 'Pandora 103', plot_path)
+df['instrument'] = instrument_nm
+daily_plots_LTC(df, 'NO2', instrument_nm, plot_path)
 
 df_lev3 = df.copy()
 
 #%% save merged_data to shelve
 import shelve
 my_shelf = shelve.open(output_shelve_filename,'n') # 'n' for new
-print(dir())
+#print(dir())
 for key in dir():
-    print(key)
+    #print(key)
     if key.find('df_lev3') != -1:
         try:
             my_shelf[key] = globals()[key]
