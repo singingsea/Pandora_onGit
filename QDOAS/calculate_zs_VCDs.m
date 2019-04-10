@@ -1,16 +1,33 @@
 function data = calculate_zs_VCDs(data,p)
-%data.SCD = data.dSCD + abs(p(2));
-data.SCD = data.dSCD + abs(p(2))*1.2;
+use_corrected_NO2 = true;
 
-data.ndacc_vcd = data.SCD./data.ndacc_amf;
+if nargin < 1
+    [p,stats] = estimate_RCD();
+    %load('C:\Projects\Zenith_NO2\plots\ndacc_ZS_PanPS_DS_VCDs.mat');% CF > 1.1
+    %load('C:\Projects\Zenith_NO2\plots\ndacc_ZS_PanPS_DS_VCDs_unfintered.mat');% unfiltered
+    % just load ZS/DS NO2 data and sky imager data
+    %load('C:\Projects\Zenith_NO2\matlab.mat');
+    load('C:\Projects\Zenith_NO2\matlab_ZSDS_skyimager_OMI_DS_corrected.mat');
+end
+%data.SCD = data.dSCD + abs(p(2));
+data.SCD = data.dSCD + abs(p(2))*1;% calculate slant column of ZS measurement
+
+data.ndacc_vcd = data.SCD./data.ndacc_amf;% calculate vertical column of ZS measurement
+
+if use_corrected_NO2
+    data.VCD = data.VCD_corrected;% replace NO2 VCD used in analysis by corrected values
+else
+    data.VCD = data.NO2_VCD;
+end
 
 % CI filter
-%TF = data.CI > 1.1;
-%data = data(TF,:);
+TF = data.CI > 1.1;
+data = data(TF,:);
 
-TF_SZA = (data.SZA > 70) & (data.SZA < 30);
+% DS data filter
+TF_SZA = (data.SZA > 80) | (data.SZA < 20);
 data(TF_SZA,:) = [];
-TF = (data.NO2_VCD <= 0) & (data.NO2_VCD >= 2.5);
+TF = (data.NO2_VCD <= 0) | (data.NO2_VCD >= 3);
 data(TF,:) = [];
 
 % SZA groups
@@ -26,27 +43,27 @@ TF7 = (data.SZA > 80) & (data.SZA <= 90);
 
 %% fig 1
 figure;hold all;
-dscatter(data.ndacc_vcd,data.NO2_VCD);
+dscatter(data.ndacc_vcd,data.VCD);
 xlim([-0.5 2.5]);
 ylim([-0.5 2.5]);
 plot([-10 10],[-10 10],'k');
-plot_simple_linear_fit(data.ndacc_vcd,data.NO2_VCD);
-plot_simple_nl_fit(data.ndacc_vcd,data.NO2_VCD);
+plot_simple_linear_fit(data.ndacc_vcd,data.VCD);
+plot_simple_nl_fit(data.ndacc_vcd,data.VCD);
 xlabel('ZS NDACC VCD [DU]');
 ylabel('DS VCD [DU]');
 legend('data density','1-on-1','y = a*x+b', 'y = a*x');
-R = corr(data.NO2_VCD,data.ndacc_vcd);
+R = corr(data.VCD,data.ndacc_vcd);
 text(0,2,['R = ' num2str(R)]);
 grid on;
 
 %% fig 2
+figure; hold all;
 try
-    figure; hold all;
     y = data.ndacc_vcd(TF1,:); x = data.VCD(TF1,:);
     scatter(x,y,'filled');
     plot_simple_linear_fit(x,y);
     %plot_simple_nl_fit(x,y);
-catch 
+catch
 end
 y = data.ndacc_vcd(TF2,:); x = data.VCD(TF2,:);
 scatter(x,y,'filled');
@@ -83,33 +100,34 @@ try
 catch
 end
 
+plot([-10 10],[-10 10],'k');
 ylabel('ZS NDACC VCD [DU]');
 xlabel('DS VCD [DU]');
 grid on;
-xlim([-1 7]);
-ylim([-1 7]);
+xlim([-1 3]);
+ylim([-1 3]);
 legend('SZA 20-30','linear fit','SZA 30-40','linear fit','SZA 40-50','linear fit',...
     'SZA 50-60','linear fit','SZA 60-70','linear fit','SZA 70-80','linear fit','SZA 80-90','linear fit');
 
 %% fig 3
 figure; hold all;
-plot(data.DateDDMMYYYY_Timehhmmss,data.NO2_VCD,'.');
+plot(data.DateDDMMYYYY_Timehhmmss,data.VCD,'.');
 plot(data.DateDDMMYYYY_Timehhmmss,data.ndacc_vcd,'.');
 xlabel('time');
 ylabel('NO_2 VCD [DU]');
 legend('DS','ZS');
-R = corr(data.NO2_VCD,data.ndacc_vcd);
-text(min(data.DateDDMMYYYY_Timehhmmss) + 1,max(data.NO2_VCD)/2,['R = ' num2str(R)]);
+R = corr(data.VCD,data.ndacc_vcd);
+text(min(data.DateDDMMYYYY_Timehhmmss) + 1,max(data.VCD)/2,['R = ' num2str(R)]);
 
 %% fig 4
 figure; hold all;
-histogram(data.NO2_VCD,'BinWidth',0.05);
+histogram(data.VCD,'BinWidth',0.05);
 histogram(data.ndacc_vcd,'BinWidth',0.05);
 xlabel('NO_2 VCD [DU]');
 ylabel('f');
 legend('DS','ZS');
-R = corr(data.NO2_VCD,data.ndacc_vcd);
-text(max(data.NO2_VCD)/2,0,['R = ' num2str(R)]);
+R = corr(data.VCD,data.ndacc_vcd);
+text(max(data.VCD)/2,0,['R = ' num2str(R)]);
 
 
 %% 
