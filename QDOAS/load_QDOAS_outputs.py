@@ -39,11 +39,12 @@ def read_QDOAS(file_nm):
 
 #%%
 
-
-file_nm = 'E:\Projects\Zenith_NO2\QDOAS_outputs\\Pandora103_NDACC_O3_NO2.dat'
-outputpath = 'E:\Projects\Zenith_NO2\QDOAS_outputs\\'
+#file_nm = 'E:\Projects\Zenith_NO2\QDOAS_outputs\\Pandora103_NDACC_O3_NO2.dat'
+file_nm = 'C:\Projects\Zenith_NO2\QDOAS_outputs\\Pandora103_NDACC_O3_NO2_ref20160619.dat'
+#outputpath = 'E:\Projects\Zenith_NO2\QDOAS_outputs\\'
+outputpath = 'C:\Projects\Zenith_NO2\QDOAS_outputs\\'
 location = 'Toronto'
-shelve_filename = outputpath + 'QDOAS_outputs' + '.out'
+shelve_filename = outputpath + 'QDOAS_outputs_ref20160619' + '.out'
 
 df_QDOAS = read_QDOAS(file_nm)
 
