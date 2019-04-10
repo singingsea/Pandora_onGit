@@ -9,10 +9,14 @@ import pandas as pd
 import shelve
 
 # output file
-output_file = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3_Sky_imager.csv'
-shelve_filename_output = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3_Sky_imager'
+output_path = 'C:\\Projects\\Zenith_NO2\\plot_lev3_corrected\\'
+#output_file = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3_Sky_imager.csv'
+output_file = output_path + 'QDOAS_PanPS_ref2016_v5_Sky_imager.csv'
+shelve_filename_output = output_path + 'QDOAS_PanPS_ref2016_v5_Sky_imager'
+
 # this is the merged QDOAS processed 
-shelve_filename = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3'
+#shelve_filename = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3'
+shelve_filename = 'C:\\Projects\\Zenith_NO2\\plot_lev3_corrected\\QDOAS_PanPS_ref2016_v5'
 # load data to shelve
 my_shelf = shelve.open(shelve_filename)
 for key in my_shelf:
