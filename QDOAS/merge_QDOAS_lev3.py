@@ -29,14 +29,15 @@ def get_single_fitting_result(df,routine, start_wv,end_wv,poly,offset,wv_change,
     return df
 
 #lev3_shelve_filename = 'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2_plots\\lev3.out'
-lev3_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\lev3.out'
+#lev3_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\lev3.out'
+#lev3_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correction2\\lev3_corrected.out'# min start NO2 correction applied (Vitali's SO2 method)
+lev3_shelve_filename = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_correction3\\lev3_corrected.out'# min start NO2 correction applied (Hermans' NO2 method)
 #QDOAS_shelve_filename = 'E:\\Projects\\Zenith_NO2\\QDOAS_outputs\\QDOAS_outputs.out'
 QDOAS_shelve_filename = 'C:\\Projects\\Zenith_NO2\\QDOAS_outputs\\QDOAS_outputs_ref20160619.out'
 #plotpath = 'E:\\Projects\\Zenith_NO2\\plots\\'
-plotpath = 'C:\\Projects\\Zenith_NO2\\plots\\'
-output_data_file = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3.csv'
-shelve_filename = 'C:\\Projects\\Zenith_NO2\\plots\\QDOAS_PanPS_ref2016_v3'
-
+plotpath = 'C:\\Projects\\Zenith_NO2\\plot_lev3_corrected\\'
+output_data_file = plotpath + 'QDOAS_PanPS_ref2016_v5.csv'
+shelve_filename = plotpath + 'QDOAS_PanPS_ref2016_v5'
 
 open_shelf(lev3_shelve_filename)
 open_shelf(QDOAS_shelve_filename)
@@ -50,7 +51,7 @@ df_SO2 = get_single_fitting_result(df_lev3,'SU',306.0,330.0,4,0,1,2) # window 9,
 
 
 # only save the following columns from lev3 to our final dataframe
-list_of_columns = ['UTC','LTC','O3_VCD','NO2_VCD','SO2_VCD','HCHO_VCD','time',
+list_of_columns = ['UTC','LTC','O3_VCD','NO2_VCD','VCD_corrected','SO2_VCD','HCHO_VCD','time',
 'Column 1: Two letter code of measurement routine',
 'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)',
 'Column 5: Total duration of measurement set in seconds',
