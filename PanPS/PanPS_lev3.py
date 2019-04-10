@@ -57,6 +57,8 @@ def read_BlickP_lev3(file_nm):
         df['location'] = 'Downsview'
     elif file_nm.find('FortMcKay') != -1:
         df['location'] = 'FortMcKay'
+    elif file_nm.find('OilSands') != -1: # note for Pandora 104, measurements made in 2013 and 2014, the site was called "OilSands"
+        df['location'] = 'FortMcKay'
     elif file_nm.find('StGeorge') != -1:
         df['location'] = 'StGeorge'
     elif file_nm.find('Envcanad') != -1:
@@ -243,8 +245,12 @@ from sites_list import sites_list
 #plotpath = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\123\\L3_plots\\' # Pandora108 data on Brewer server
 #filepath =  'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2\\' 
 #plotpath = 'E:\\Projects\\Zenith_NO2\\Pan_level3data_V2_plots\\'
-filepath =  'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103\\' 
-plotpath = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\'
+#filepath =  'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103\\' 
+#plotpath = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P103_plots\\'
+filepath =  'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104\\FortMcKay\\' 
+plotpath = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_plots\\FortMcKay\\'
+#filepath =  'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104\\Downsview\\' 
+#plotpath = 'C:\\Projects\\Zenith_NO2\\Pan_level3data_P104_plots\\Downsivew\\'
 shelve_filename = plotpath + 'lev3' + '.out'
 
 # read in all PanPS level 3 data (daily files) and then concat them to a single dataframe
