@@ -1,5 +1,17 @@
 # -*- coding: utf-8 -*-
 """
+Created on Wed Jul 24 15:29:59 2019
+
+@author: ZhaoX
+
+eemmmm ... this version is same as clean one, I was trying to do some modifications, but I think the code is okay for now!
+
+
+
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Mon Jan 29 11:28:00 2018
 
 @author: ZhaoX
@@ -12,29 +24,31 @@ from pysolar.solar import *
 import datetime
 import dateutil.parser
 import numpy as np
-instrument_no = 108 # the instrument serieal number
+import os
+instrument_no = 104 # the instrument serieal number
 process_PanPS_lev2 = False # if True, process PanPS lev2 data, if False process BlickP L1 data
 process_all_files = False # process all files in L1 folder, or just for a period
 
-start_date = '2018-07-19' # use 'yyyy-mm-dd' format, this only used if process_all_files = False  
-end_date = '2018-07-19' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
+start_date = '2018-08-28' # use 'yyyy-mm-dd' format, this only used if process_all_files = False  
+end_date = '2019-07-23' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
 # the location, lat, lon, and alt information will be direactly read from L1 file
 
-# provide the file path, L1 file or lev2 file
+# provide the file path, L1 file or lev2 file (if you have old PanPS data!)
 L1_file_path = '\\\\WONTLABJ105896\\G\\Pandora\\'  + str(instrument_no) + '\\Blick\\L1\\'
-#lev2_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\L2\\'
-lev2_file_path = '\\\\WONTLABJ105896\\G\\Pandora\\'  + str(instrument_no) + '\\L2\\FortMcKay\\'
-#lev2_file_path = '\\\\wdow05dtmibroh.ncr.int.ec.gc.ca\\GDrive\\Pandora\\zipfiles\\Pan_level2data\\'
+#lev2_file_path = '\\\\WONTLABJ105896\\G\\Pandora\\'  + str(instrument_no) + '\\L2\\FortMcKay\\'
+#L1_file_path = 'C:\\Users\\ZhaoX\\Documents\\paper\\Mao\\L1\\'
+
 
 # provide the output file path
-#spe_file_path = '\\\\wdow05dtmibroh\\GDrive\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe_lev2_from_Vitali_2013_2014\\'
-#spe_file_path = '\\\\wdow05dtmibroh\\G\\Pandora\\'  + str(instrument_no) + '\\Blick\\spe_BlickP_L1\\'
 spe_file_path = '\\\\WONTLABJ105896.ncr.int.ec.gc.ca\\G\\Pandora\\' + str(instrument_no) + '\\Blick\\spe_BlickP_L1\\'
-#spe_file_path = '\\\\WONTLABJ105896\\G\\Pandora\\'  + str(instrument_no) + '\\spe_PanPS_lev2\\FortMacKay\\'
+#spe_file_path =  'C:\\Users\\ZhaoX\\Documents\\paper\\Mao\\spe\\'
+try:
+    os.mkdir(spe_file_path)
+except:
+    print('output folder already exists')
 
 # please update the site list, this is used to interpret local standard time 
-#sites_list_LTC = {'Downsview': 'America/Toronto', 'FortMcKay': 'America/Edmonton',  'Fort McKay': 'America/Edmonton', 'StGeorge':'America/Toronto', 'Toronto':'America/Toronto', 'Egbert':'America/Toronto'}
-sites_list_LSC = {'Downsview': 'EST', 'FortMcKay': 'MST', 'Fort McKay': 'MST', 'StGeorge':'EST', 'Toronto' : 'EST', 'Egbert':'EST'}
+sites_list_LSC = {'Downsview': 'EST', 'FortMcKay': 'MST', 'Fort McKay': 'MST', 'StGeorge':'EST', 'Toronto' : 'EST', 'Egbert':'EST','Fairbanks':'America/Anchorage'}
 
 
 Measurement_Type_Index_dict = {
@@ -81,6 +95,34 @@ def read_BlickP_L1(file_nm):
             lon = float(header[len('Location longitude [deg]: '):])
         if header.find('Location altitude [m]: ') != -1: # find 'altitude'    
             alt = float(header[len('Location altitude [m]: '):])
+        
+        if header.find('Nominal wavelengths [nm]: ') != -1: # find the Nominal wavelengths info
+            wv = header[len('Nominal wavelengths [nm]: '):]
+            wv= np.fromstring(wv, dtype=float, sep=' ')
+        
+        
+        if header.find(': Level 1 data for each pixel') != -1: # find the spectra part and get their column numbers
+            start_line = header.find('Columns ') + len('Columns ')
+            end_line = header.find(': Level 1 data for each pixel')
+            to_line = header.find('-')
+            spec_start_column = int(header[start_line:to_line])# this is the frist column number for spectrum
+            spec_end_column = int(header[to_line+1:end_line])# this is the last column number for spectrum
+        
+        ### for now, we do not read these in reformat, to speed up the process, if needed, one can enable the following line to read the pixel uncertainty
+        if header.find(': Uncertainty of level 1 data for each pixel') != -1: # find the spectra uncertianty part and get their column numbers
+            start_line = header.find('Columns ') + len('Columns ')
+            end_line = header.find(': Uncertainty of level 1 data for each pixel')
+            to_line = header.find('-')
+            spec_uncertianty_start_column = int(header[start_line:to_line])# this is the frist column number for spectrum uncertianty
+            spec_uncertianty_end_column = int(header[to_line+1:end_line])# this is the last column number for spectrum uncertianty
+
+        if header.find(': Instrumental uncertainty of level 1 data for each pixel') != -1: # find the Instrument uncertianty of level 1 part and get their column numbers
+            start_line = header.find('Columns ') + len('Columns ')
+            end_line = header.find(': Instrumental uncertainty of level 1 data for each pixel')
+            to_line = header.find('-')
+            instrument_uncertianty_start_column = int(header[start_line:to_line])# this is the frist column number for Instrument uncertianty
+            instrument_uncertianty_end_column = int(header[to_line+1:end_line])# this is the last column number for Instrument uncertianty
+
             
         No_header_lines += 1 # count how many lines belong to header
         if header.find('----') != -1: # find '----' symble
@@ -91,20 +133,22 @@ def read_BlickP_L1(file_nm):
                 read_column_names = False
         if read_column_names == True:
             column_names.append(header.strip()) # save column names           
-    del column_names[0]
-    del column_names[-1:-3]
+
+            
+    del column_names[0]# delete the 1st '-------' symble    
+    del column_names[-1]# remove the last three lines in header [the ones for instrument uncertainty columns]
+    del column_names[-1]# remove the last three lines in header [the ones for spectrum uncertainty columns]
+    del column_names[-1]# remove the last three lines in header [the ones for spectrum columns]
     
-    for spec_data_column in list(range(64,6207)):
-        column_names.append('L1_' + str(spec_data_column)) 
+    #for spec_data_column in list(range(64,6207)):
+    for spec_data_column in list(range(spec_start_column,instrument_uncertianty_end_column+1)):
+        column_names.append('Column_' + str(spec_data_column)) 
         
-  
-       
-    #print(No_header_lines)
     f.close()           
                           
     df = pd.read_csv(file_nm, sep='\s+', header=None, names = column_names, skiprows= No_header_lines) # read in data use Pandas frame
    
-    return df, instrument_no, location, lat, lon, alt
+    return df, instrument_no, location, lat, lon, alt, wv, spec_start_column, spec_end_column
 #%%
 def read_PanPS_lev2(file_nm):
     
@@ -134,12 +178,9 @@ def read_PanPS_lev2(file_nm):
             column_names.append(header.strip()) # save column names           
     del column_names[0]
     del column_names[-1:-3]
-    for spec_data_column in list(range(54,4149)):
+    for spec_data_column in list(range(54,4149)): # warning! Please check this in the file lev2 file! Make sure this is the range of spectrum columns!
         column_names.append('L1_' + str(spec_data_column)) 
         
-  
-       
-    #print(No_header_lines)
     f.close()           
                           
     df = pd.read_csv(file_nm, sep='\s+', header=None, names = column_names, skiprows= No_header_lines,index_col = False) # read in data use Pandas frame
@@ -157,6 +198,7 @@ def check_ZS_modes(full_file_name, df):
 #%% 
 def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         if process_PanPS_lev2 == False:
+            # this is the dictionary for Blick L1 data
             column_nm_dict = {
                     'Column 1: Two letter code of measurement routine':'measurement_routine',
                     'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)':'ISO_time',
@@ -170,25 +212,14 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
                     'Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used':'PAA',
                     'Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)':'APM',
                     #'Column 61: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.3
-                    'Column 78: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5
+                    #'Column 78: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5
+                    'Column 74: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5.2
                     'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]':'data_type'# for Blick1.3
                     #'Column 80: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [uW/m2/nm/sr], 3=irradiance [uW/m2/nm]':'data_type'# for Blick1.5
                     }           
-#            df_sp = df[['Column 1: Two letter code of measurement routine',
-#                    'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)',
-#                    'Column 6: Total duration of measurement set in seconds',
-#                    'Column 7: Data processing type index',
-#                    'Column 8: Integration time [ms]',
-#                    'Column 12: Effective position of filterwheel #1, 0=filterwheel not used, 1-9 are valid positions',
-#                    'Column 13: Effective position of filterwheel #2, 0=filterwheel not used, 1-9 are valid positions',
-#                    'Column 14: Pointing zenith angle in degree, absolute or relative (see next column), 999=tracker not used',
-#                    'Column 15: Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon',
-#                    'Column 16: Pointing azimuth in degree, increases clockwise, absolute (0=north) or relative (see next column), 999=tracker not used',
-#                    'Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)',
-#                    'Column 61: Scale factor for data, to obtain unscaled output divide data by this number',
-#                    'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]'
-#                    ]]
+
         else:
+            # this is the dictionary for PanPS lev2 data
             column_nm_dict = {
                     'Column 1: Two letter code of measurement routine':'measurement_routine',
                     'Column 2: UT date and time for beginning of measurement, yyyymmddThhmmssZ (ISO 8601)':'ISO_time',
@@ -300,9 +331,9 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         # make azimuth viewing angle column        
         for i in range(len(df_sp)):            
             if df_sp['APM'][i] == 0:
-                df_output.iat[i,col_nm_VAA] = df_sp.iat[i,col_nm_PAA]
+                df_output.iat[i,col_nm_VAA] = round(df_sp.iat[i,col_nm_PAA])
             elif df_sp['APM'][i] == 1:
-                df_output.iat[i,col_nm_VAA] = df_sp.iat[i,col_nm_SAA] - df_sp.iat[i,col_nm_PAA]
+                df_output.iat[i,col_nm_VAA] = round(df_sp.iat[i,col_nm_SAA] - df_sp.iat[i,col_nm_PAA])
             elif df_sp['APM'][i] == 2:
                 print('Warning: we do not calcualte moon location!')  
                 df_output.iat[i,col_nm_VAA] = 'NaN'     
@@ -317,10 +348,10 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         return df_output    
 
 #%%
-def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, location, lat, lon, alt):
+def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, location, lat, lon, alt,wv):
     spefilename = spe_file_path + file_name[:-4] + '.spe'
     with open(spefilename, 'w') as f:
-        # write the general header
+        # write the general header, modify this if needed
         f.write('# Station = ' + location + '(lat ' + str(lat) + ' , lon ' + str(lon) + ')' + '\n')
         f.write('# Institute = Environment and Climate Change Canada' + '\n')
         f.write('# PI name = Vitali Fioletov (vitali.fioletov@canada.ca)' + '\n')
@@ -335,7 +366,6 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
             # write the header for each spectrum
             f.write('Date(DD/MM/YYY) = ' + str(df_header.Date[i]) + '\n')
             f.write('UTC Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
-            #f.write('UTC Start Time (hh:mm:ss) = ' + str(df_header.time[i]) + '\n')
 
             f.write('Viewing Elevation Angle (deg) = ' + str(df_header.VEA[i]) + '\n') 
             f.write('Viewing Azimuth Angle (deg) = ' + str(df_header.VAA[i]) + '\n')
@@ -353,8 +383,13 @@ def QDOAS_ASCII_formater_write(df_header,df_spec,file_name, instrument_no, locat
             # calculate un-scaled spec
             spec = df_spec.iloc[i,:]/df_header.Scale_factor[i]
             # make a dataframe to store spec
-            df_spec_4write = pd.DataFrame(columns = ['place_holder','spec'])
+            
+            df_spec_4write = pd.DataFrame(columns = ['place_holder_1','place_holder_2','spec'])
+            #df_spec_4write = pd.DataFrame(columns = [wv,'spec'])
             df_spec_4write['spec'] = spec
+            if any(wv) != -999: # for Blick L1, we also wrote the nominal weavelength
+                df_spec_4write['place_holder_2'] = wv
+            
             # write the spec dataframe into file
             df_spec_4write.to_csv(f, mode = 'a', sep = '\t',index = False,header = False)
 
@@ -400,7 +435,7 @@ for idx, file_name in enumerate(src_files):
                     
                     #### if we reformat BlickP L1 data ###
                     if process_PanPS_lev2 == False:
-                        df, instrument_no_infile, location, lat, lon, alt = read_BlickP_L1(full_file_name) # read L1 file
+                        df, instrument_no_infile, location, lat, lon, alt , wv, spec_start_column, spec_end_column = read_BlickP_L1(full_file_name) # read L1 file
                         
                         # check if we have same instrument number as indicated 
                         if instrument_no_infile != instrument_no: 
@@ -414,7 +449,8 @@ for idx, file_name in enumerate(src_files):
                             print('     prepare header of the spe file ... ')
                             df_header = QDOAS_ASCII_formater_header(df,process_PanPS_lev2) # prepare header part of the spe file
                             print('     prepare spectrum of the spe file ... ')
-                            df_spec = df.iloc[:,63:2111] # prepare spectrum  part of the spe file, note here the spec is scaled value!
+                            #df_spec = df.iloc[:,63:2111] # prepare spectrum  part of the spe file, note here the spec is scaled value!
+                            df_spec = df.iloc[:,spec_start_column-1:spec_end_column] # prepare spectrum  part of the spe file, note here the spec is scaled value!
                             print('     writting to QDOAS spe file ... ')
                             
                             # speration of modes
@@ -444,7 +480,7 @@ for idx, file_name in enumerate(src_files):
                                         # give the subset a unique name
                                         file_name_subset = seperation_label + file_name
                                         # write the subset to spe file
-                                        QDOAS_ASCII_formater_write(df_header_subset,df_spec_subset,file_name_subset, instrument_no, location, lat, lon, alt)
+                                        QDOAS_ASCII_formater_write(df_header_subset,df_spec_subset,file_name_subset, instrument_no, location, lat, lon, alt,wv)
                             del df_header, df_spec
                         del df, location, lat, lon, alt 
                     
@@ -494,16 +530,8 @@ for idx, file_name in enumerate(src_files):
                                         df_spec_subset.reset_index(drop=True,inplace = True)
                                         # give the subset a unique name
                                         file_name_subset = seperation_label + file_name
+                                        wv = -999;
                                         # write the subset to spe file
-                                        QDOAS_ASCII_formater_write(df_header_subset,df_spec_subset,file_name_subset, instrument_no, location, lat, lon, alt)
+                                        QDOAS_ASCII_formater_write(df_header_subset,df_spec_subset,file_name_subset, instrument_no, location, lat, lon, alt,wv)
                             del df_header, df_spec
                         del df, location, lat, lon, alt 
-
-
-                
-                    #no_ZS = check_ZS_modes(full_file_name, df)
-                    #total_ZS += no_ZS
-                
-                
-
-#print(str(total_ZS))
