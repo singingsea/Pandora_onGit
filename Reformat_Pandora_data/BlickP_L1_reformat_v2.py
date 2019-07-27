@@ -4,9 +4,16 @@ Created on Wed Jul 24 15:29:59 2019
 
 @author: ZhaoX
 
-eemmmm ... this version is same as clean one, I was trying to do some modifications, but I think the code is okay for now!
+V2 update (2019-07-27): 
+    
+    1.	Auto-detect of spectrum column numbers in the L1 data
+    2.	Use skyfiled to replace pysolar; skyfield has better precision
+    3.	Include Pandora L1 nominal wavelength in the spe file
+    4.	Include direct-moon QDOAS readable spe; skyfiled also calculate moon position (which is an upgraded version of ephem package)
 
-
+Warning: 
+    1. the lev2 part is not modified! So, be careful about the spectrum column numbers!
+    2. lev2 data do not have nominal weavlength
 
 """
 
@@ -25,7 +32,7 @@ import dateutil.parser
 import numpy as np
 import os
 
-from skyfield.api import load
+from skyfield.api import load # load skyfiled functions
 from skyfield.api import Topos
 from astropy import units
 planets = load('de421.bsp')
@@ -33,7 +40,7 @@ ts = load.timescale()
     
 instrument_no = 104 # the instrument serieal number
 process_PanPS_lev2 = False # if True, process PanPS lev2 data, if False process BlickP L1 data
-process_all_files = False # process all files in L1 folder, or just for a period
+process_all_files = True # process all files in L1 folder, or just for a period
 
 start_date = '2018-08-28' # use 'yyyy-mm-dd' format, this only used if process_all_files = False  
 end_date = '2019-07-23' # use 'yyyy-mm-dd' format, this only used if process_all_files = False
