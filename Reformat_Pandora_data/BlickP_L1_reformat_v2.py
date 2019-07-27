@@ -20,11 +20,16 @@ Created on Mon Jan 29 11:28:00 2018
 # this function is intent to reformat BlickP processed L1 data to QDOAS readable files
 
 import pandas as pd
-from pysolar.solar import *
-import datetime
+#from pysolar.solar import * # this is replaced by skyfied, which can also calculate moon position
 import dateutil.parser
 import numpy as np
 import os
+
+from skyfield.api import load
+from skyfield.api import Topos
+from astropy import units
+planets = load('de421.bsp')
+    
 instrument_no = 104 # the instrument serieal number
 process_PanPS_lev2 = False # if True, process PanPS lev2 data, if False process BlickP L1 data
 process_all_files = False # process all files in L1 folder, or just for a period
@@ -40,7 +45,7 @@ L1_file_path = '\\\\WONTLABJ105896\\G\\Pandora\\'  + str(instrument_no) + '\\Bli
 
 
 # provide the output file path
-spe_file_path = '\\\\WONTLABJ105896.ncr.int.ec.gc.ca\\G\\Pandora\\' + str(instrument_no) + '\\Blick\\spe_BlickP_L1\\'
+spe_file_path = '\\\\WONTLABJ105896.ncr.int.ec.gc.ca\\G\\Pandora\\' + str(instrument_no) + '\\Blick\\spe_BlickP_L1_v2\\'
 #spe_file_path =  'C:\\Users\\ZhaoX\\Documents\\paper\\Mao\\spe\\'
 try:
     os.mkdir(spe_file_path)
@@ -196,6 +201,29 @@ def check_ZS_modes(full_file_name, df):
    return no_ZS
 
 #%% 
+def get_sun_moon_position(site_lat, site_lon, time, earth, track_planet):
+    # input example: 
+    # site_lat = 42.3583 # or site_lat = '42.3583 N'
+    # site_lon = -71.0636 # or site_lon = '71.0636 W'
+    # time = pd.to_datetime('20181122T150000Z', format='%Y%m%dT%H%M%SZ', errors='ignore',utc = True)
+    # track_planet = 'sun' # or 'moon', or 'mars' ...
+    
+    #earth, track_planet = planets['earth'], planets[track_planet]
+    ts = load.timescale()
+    t = ts.utc(time.year, time.month, time.day, time.hour, time.minute, time.second)    
+    
+    site = earth + Topos(site_lat, site_lon)
+    astrometric = site.at(t).observe(track_planet)
+    alt, az, d = astrometric.apparent().altaz()
+    alt = alt.to(units.deg)
+    az = az.to(units.deg)
+
+    alt = alt.value
+    az = az.value
+    
+    return alt, az
+       
+#%% 
 def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         if process_PanPS_lev2 == False:
             # this is the dictionary for Blick L1 data
@@ -265,16 +293,38 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         print('     Add SZA and SAA column to dataframe')  
         df_sp['SZA'] = '' 
         df_sp['SAA'] = '' 
+        df_sp['MZA'] = '' 
+        df_sp['MAA'] = ''
         
         calculated_SZA = np.zeros(shape=(len(df_sp),1))
         calculated_SAA = np.zeros(shape=(len(df_sp),1))
-        for i in range(len(df_sp)):
-            calculated_SZA[i] = 90 - get_altitude(lat, lon, df_sp.LSC[i])          
-            calculated_SAA[i] = get_azimuth(lat, lon, df_sp.LSC[i])
+        calculated_MZA = np.zeros(shape=(len(df_sp),1))
+        calculated_MAA = np.zeros(shape=(len(df_sp),1))     
+        
+        earth = planets['earth'] # this use skyfield, note here input is utc
+        for i in range(len(df_sp)): # calculate SZA and SAA
+#            calculated_SZA[i] = 90 - get_altitude(lat, lon, df_sp.LSC[i])# this use the pysolar , note here input is local standar time
+#            calculated_SAA[i] = get_azimuth(lat, lon, df_sp.LSC[i])# this use the pysolar
+            
+            track_planet = planets['sun']# this use skyfield, note here input is utc
+            alt, az = get_sun_moon_position(lat, lon, df_sp.UTC[i], earth, track_planet)
+            calculated_SZA[i] = 90 - alt
+            calculated_SAA[i] = az
+            del alt, az
+            
+        for i in range(len(df_sp)): # calculate MZS and MAA
+            track_planet = planets['moon'] # this use skyfield, note here input is utc
+            alt, az = get_sun_moon_position(lat, lon, df_sp.UTC[i], earth, track_planet)
+            calculated_MZA[i] = 90 - alt
+            calculated_MAA[i] = az
+            del alt, az
+
+            
         # assign the calculated SZA and SAA to dataframe   
         df_sp.SZA = calculated_SZA
         df_sp.SAA = calculated_SAA
-        
+        df_sp.MZA = calculated_MZA
+        df_sp.MAA = calculated_MAA        
         
         df_output = pd.DataFrame()
         df_output['UTC'] = df_sp.UTC
@@ -284,6 +334,8 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         df_output['Total_Measurement_Time'] = df_sp['measurement_time']
         df_output['SZA'] = df_sp.SZA # solar zenith angle [deg]
         df_output['SAA'] = df_sp.SAA # solar azimuth angle [deg]
+        df_output['MZA'] = df_sp.MZA # moon zenith angle [deg]
+        df_output['MAA'] = df_sp.MAA # moon azimuth angle [deg]        
         df_output['VAA'] = '' # viewing azimuth angle angle [deg]
         df_output['VEA'] = ''# viewing elevation angle angle [deg]
         df_output['fd'] = ''
@@ -319,14 +371,19 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
         col_nm_PAA = df_sp.columns.get_loc('PAA')
         col_nm_SZA = df_sp.columns.get_loc('SZA')
         col_nm_SAA = df_sp.columns.get_loc('SAA')
+        col_nm_MZA = df_sp.columns.get_loc('MZA')
+        col_nm_MAA = df_sp.columns.get_loc('MAA')
+        
         for i in range(len(df_sp)):
-            if df_sp['ZPM'][i] == 0:               
+            if df_sp['ZPM'][i] == 0: #Zenith pointing mode: zenith angle is... 0=absolute, 1=relative to sun, 2=relative to moon               
                 df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_PZA]
             elif df_sp['ZPM'][i] == 1:
                 df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_SZA] - df_sp.iat[i,col_nm_PZA]
             elif df_sp['ZPM'][i] == 2:
-                print('Warning: we do not calcualte moon location!')  
-                df_output.iat[i,col_nm_VEA] = 'NaN'
+#                print('Warning: we do not calcualte moon location!')# if use skyfield, we can calculate moon position
+#                df_output.iat[i,col_nm_VEA] = 'NaN'
+                df_output.iat[i,col_nm_VEA] = 90 - df_sp.iat[i,col_nm_MZA] - df_sp.iat[i,col_nm_PZA]
+                
                 
         # make azimuth viewing angle column        
         for i in range(len(df_sp)):            
@@ -335,9 +392,10 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
             elif df_sp['APM'][i] == 1:
                 df_output.iat[i,col_nm_VAA] = round(df_sp.iat[i,col_nm_SAA] - df_sp.iat[i,col_nm_PAA])
             elif df_sp['APM'][i] == 2:
-                print('Warning: we do not calcualte moon location!')  
-                df_output.iat[i,col_nm_VAA] = 'NaN'     
-        
+#                print('Warning: we do not calcualte moon location!')# if use skyfield, we can calculate moon position
+#                df_output.iat[i,col_nm_VAA] = 'NaN'     
+                df_output.iat[i,col_nm_VAA] = round(df_sp.iat[i,col_nm_MAA] - df_sp.iat[i,col_nm_PAA])
+                
         # make fractional day column
         #for i in range(len(df_sp)):
         #    hh = df_sp['UTC'][i].hour
