@@ -29,6 +29,7 @@ from skyfield.api import load
 from skyfield.api import Topos
 from astropy import units
 planets = load('de421.bsp')
+ts = load.timescale()
     
 instrument_no = 104 # the instrument serieal number
 process_PanPS_lev2 = False # if True, process PanPS lev2 data, if False process BlickP L1 data
@@ -201,7 +202,7 @@ def check_ZS_modes(full_file_name, df):
    return no_ZS
 
 #%% 
-def get_sun_moon_position(site_lat, site_lon, time, earth, track_planet):
+def get_sun_moon_position(site_lat, site_lon, time, earth, track_planet, ts):
     # input example: 
     # site_lat = 42.3583 # or site_lat = '42.3583 N'
     # site_lon = -71.0636 # or site_lon = '71.0636 W'
@@ -209,7 +210,7 @@ def get_sun_moon_position(site_lat, site_lon, time, earth, track_planet):
     # track_planet = 'sun' # or 'moon', or 'mars' ...
     
     #earth, track_planet = planets['earth'], planets[track_planet]
-    ts = load.timescale()
+    #ts = load.timescale()
     t = ts.utc(time.year, time.month, time.day, time.hour, time.minute, time.second)    
     
     site = earth + Topos(site_lat, site_lon)
@@ -307,14 +308,14 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
 #            calculated_SAA[i] = get_azimuth(lat, lon, df_sp.LSC[i])# this use the pysolar
             
             track_planet = planets['sun']# this use skyfield, note here input is utc
-            alt, az = get_sun_moon_position(lat, lon, df_sp.UTC[i], earth, track_planet)
+            alt, az = get_sun_moon_position(lat, lon, df_sp.UTC[i], earth, track_planet, ts)
             calculated_SZA[i] = 90 - alt
             calculated_SAA[i] = az
             del alt, az
             
         for i in range(len(df_sp)): # calculate MZS and MAA
             track_planet = planets['moon'] # this use skyfield, note here input is utc
-            alt, az = get_sun_moon_position(lat, lon, df_sp.UTC[i], earth, track_planet)
+            alt, az = get_sun_moon_position(lat, lon, df_sp.UTC[i], earth, track_planet, ts)
             calculated_MZA[i] = 90 - alt
             calculated_MAA[i] = az
             del alt, az
