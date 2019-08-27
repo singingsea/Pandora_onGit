@@ -38,7 +38,7 @@ from astropy import units
 planets = load('de421.bsp')
 ts = load.timescale()
     
-instrument_no = 104 # the instrument serieal number
+instrument_no = 144 # the instrument serieal number
 process_PanPS_lev2 = False # if True, process PanPS lev2 data, if False process BlickP L1 data
 process_all_files = True # process all files in L1 folder, or just for a period
 
@@ -249,9 +249,11 @@ def QDOAS_ASCII_formater_header(df,process_PanPS_lev2):
                     'Column 17: Azimuth pointing mode: like zenith angle mode but also fixed scattering angles relative to sun (3) or moon (4)':'APM',
                     #'Column 61: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.3
                     #'Column 78: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5
-                    'Column 74: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5.2
-                    'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]':'data_type'# for Blick1.3
+                    #'Column 74: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5.2
+                    'Column 82: Scale factor for data, to obtain unscaled output divide data by this number':'scale_factor',# for Blick1.5.7
+                    #'Column 63: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [W/m2/nm/sr], 3=irradiance [W/m2/nm]':'data_type'# for Blick1.3
                     #'Column 80: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [uW/m2/nm/sr], 3=irradiance [uW/m2/nm]':'data_type'# for Blick1.5
+                    'Column 84: Level 1 data type, data are... 1=corrected count rate [s-1], 2=radiance [uW/m2/nm/sr], 3=irradiance [uW/m2/nm]':'data_type'# for Blick1.5.7
                     }           
 
         else:
